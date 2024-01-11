@@ -5,7 +5,7 @@
 # strip the automatically generated dep here and instead co-own the
 # directory.
 %global __requires_exclude pkg-config
-%define dist_free_release 21.git20230214
+%define dist_free_release 44.git20230822
 
 Name: dracut
 Version: 057
@@ -49,6 +49,29 @@ Patch17: 0017.patch
 Patch18: 0018.patch
 Patch19: 0019.patch
 Patch20: 0020.patch
+Patch21: 0021.patch
+Patch22: 0022.patch
+Patch23: 0023.patch
+Patch24: 0024.patch
+Patch25: 0025.patch
+Patch26: 0026.patch
+Patch27: 0027.patch
+Patch28: 0028.patch
+Patch29: 0029.patch
+Patch30: 0030.patch
+Patch31: 0031.patch
+Patch32: 0032.patch
+Patch33: 0033.patch
+Patch34: 0034.patch
+Patch35: 0035.patch
+Patch36: 0036.patch
+Patch37: 0037.patch
+Patch38: 0038.patch
+Patch39: 0039.patch
+Patch40: 0040.patch
+Patch41: 0041.patch
+Patch42: 0042.patch
+Patch43: 0043.patch
 
 Source1: https://www.gnu.org/licenses/lgpl-2.1.txt
 
@@ -235,13 +258,6 @@ rm -fr -- $RPM_BUILD_ROOT/%{dracutlibdir}/modules.d/00dash
 # we do not support mksh in the initramfs
 rm -fr -- $RPM_BUILD_ROOT/%{dracutlibdir}/modules.d/00mksh
 
-%if %{defined _unitdir}
-# with systemd IMA and selinux modules do not make sense
-rm -fr -- $RPM_BUILD_ROOT/%{dracutlibdir}/modules.d/96securityfs
-rm -fr -- $RPM_BUILD_ROOT/%{dracutlibdir}/modules.d/97masterkey
-rm -fr -- $RPM_BUILD_ROOT/%{dracutlibdir}/modules.d/98integrity
-%endif
-
 %ifnarch s390 s390x
 # remove architecture specific modules
 rm -fr -- $RPM_BUILD_ROOT/%{dracutlibdir}/modules.d/80cms
@@ -395,6 +411,7 @@ echo 'dracut_rescue_image="yes"' > $RPM_BUILD_ROOT%{dracutlibdir}/dracut.conf.d/
 %{dracutlibdir}/modules.d/91tpm2-tss
 %{dracutlibdir}/modules.d/95debug
 %{dracutlibdir}/modules.d/95fstab-sys
+%{dracutlibdir}/modules.d/95hwdb
 %{dracutlibdir}/modules.d/95lunmask
 %{dracutlibdir}/modules.d/95nvmf
 %{dracutlibdir}/modules.d/95resume
@@ -415,11 +432,9 @@ echo 'dracut_rescue_image="yes"' > $RPM_BUILD_ROOT%{dracutlibdir}/dracut.conf.d/
 %{dracutlibdir}/modules.d/95zfcp
 %{dracutlibdir}/modules.d/95zfcp_rules
 %endif
-%if %{undefined _unitdir}
 %{dracutlibdir}/modules.d/96securityfs
 %{dracutlibdir}/modules.d/97masterkey
 %{dracutlibdir}/modules.d/98integrity
-%endif
 %{dracutlibdir}/modules.d/97biosdevname
 %{dracutlibdir}/modules.d/98dracut-systemd
 %{dracutlibdir}/modules.d/98ecryptfs
@@ -507,6 +522,37 @@ echo 'dracut_rescue_image="yes"' > $RPM_BUILD_ROOT%{dracutlibdir}/dracut.conf.d/
 %{_prefix}/lib/kernel/install.d/51-dracut-rescue.install
 
 %changelog
+* Tue Aug 22 2023 Pavel Valena <pvalena@redhat.com> - 057-44.git20230822
+- feat(hwdb): install hwdb on demand when module is needed
+
+* Wed Aug 16 2023 Pavel Valena <pvalena@redhat.com> - 057-43.git20230816
+- feat(spec): include modules for IMA
+- fix(dracut): there can be \ at the end on line in awk script
+- fix(rngd): spacing
+- fix(integrity): do not enable EVM if there is no key
+- fix(fips): include openssl's fips.so and openssl.cnf
+
+* Tue Jul 25 2023 Pavel Valena <pvalena@redhat.com> - 057-38.git20230725
+- fix(dracut.sh): use dynamically uefi's sections offset
+- fix(dracut.sh): handle imagebase for uefi
+- fix(dracut.sh): use gawk for strtonum
+- fix(rngd): install system service file
+- fix(nvmf): nvme list-subsys prints the address using commas
+- fix(nvmf): don't try to validate network connections in
+- fix(nvmf): no need to load the nvme module
+- fix(nvmf): don't create did-setup file
+- fix(nvmf): don't use "finished" queue for autoconnect
+- fix(nvmf): make sure "rd.nvmf.discover=fc,auto" takes
+- fix(nvmf): avoid calling "exit" in a cmdline hook
+- fix(nvmf): run cmdline hook before parse-ip-opts.sh
+- feat(nvmf): set rd.neednet=1 if tcp records encountered
+- fix(nvmf): install 8021q module unconditionally
+- fix(nvmf): support /etc/nvme/config.json
+- feat(nvmf): add code for parsing the NBFT
+
+* Tue May 30 2023 Pavel Valena <pvalena@redhat.com> - 057-22.git20230530
+- fix(lvmthinpool-monitor): activate lvm thin pool before
+
 * Tue Feb 14 2023 Pavel Valena <pvalena@redhat.com> - 057-21.git20230214
 - fix(network-manager): allow running nm-run.sh multiple times
 
