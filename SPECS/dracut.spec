@@ -5,7 +5,7 @@
 # strip the automatically generated dep here and instead co-own the
 # directory.
 %global __requires_exclude pkg-config
-%define dist_free_release 44.git20230822
+%define dist_free_release 53.git20240104
 
 Name: dracut
 Version: 057
@@ -72,6 +72,15 @@ Patch40: 0040.patch
 Patch41: 0041.patch
 Patch42: 0042.patch
 Patch43: 0043.patch
+Patch44: 0044.patch
+Patch45: 0045.patch
+Patch46: 0046.patch
+Patch47: 0047.patch
+Patch48: 0048.patch
+Patch49: 0049.patch
+Patch50: 0050.patch
+Patch51: 0051.patch
+Patch52: 0052.patch
 
 Source1: https://www.gnu.org/licenses/lgpl-2.1.txt
 
@@ -155,6 +164,7 @@ Requires: %{name} = %{version}-%{release}
 %endif
 Requires: iputils
 Requires: iproute
+Requires: jq
 Requires: (NetworkManager >= 1.20 or dhclient)
 Suggests: NetworkManager
 Obsoletes: dracut-generic < 008
@@ -413,7 +423,6 @@ echo 'dracut_rescue_image="yes"' > $RPM_BUILD_ROOT%{dracutlibdir}/dracut.conf.d/
 %{dracutlibdir}/modules.d/95fstab-sys
 %{dracutlibdir}/modules.d/95hwdb
 %{dracutlibdir}/modules.d/95lunmask
-%{dracutlibdir}/modules.d/95nvmf
 %{dracutlibdir}/modules.d/95resume
 %{dracutlibdir}/modules.d/95rootfs-block
 %{dracutlibdir}/modules.d/95terminfo
@@ -485,6 +494,7 @@ echo 'dracut_rescue_image="yes"' > $RPM_BUILD_ROOT%{dracutlibdir}/dracut.conf.d/
 %{dracutlibdir}/modules.d/95iscsi
 %{dracutlibdir}/modules.d/95nbd
 %{dracutlibdir}/modules.d/95nfs
+%{dracutlibdir}/modules.d/95nvmf
 %{dracutlibdir}/modules.d/95ssh-client
 %ifarch s390 s390x
 %{dracutlibdir}/modules.d/95znet
@@ -522,6 +532,23 @@ echo 'dracut_rescue_image="yes"' > $RPM_BUILD_ROOT%{dracutlibdir}/dracut.conf.d/
 %{_prefix}/lib/kernel/install.d/51-dracut-rescue.install
 
 %changelog
+* Thu Jan 04 2024 Pavel Valena <pvalena@redhat.com> - 057-53.git20240104
+- fix(dracut-install): use stripped kernel module path as hash
+
+* Thu Dec 07 2023 Pavel Valena <pvalena@redhat.com> - 057-52.git20231207
+- fix(dracut.sh): remove microcode check based on
+
+* Wed Nov 15 2023 Pavel Valena <pvalena@redhat.com> - 057-51.git20231115
+- fix(nvmf): move /etc/nvme/host{nqn,id} requirement to
+
+* Tue Nov 14 2023 Pavel Valena <pvalena@redhat.com> - 057-51.git20231114
+- fix(dracut.sh): correct wrong systemd variable paths
+- fix(hwdb): follow shfmt-recommended format
+- feat(dracut): add --sbat option to add sbat policy to UKI
+- feat(systemd): install systemd-sysroot-fstab-check
+- fix(dracut.spec): add jq dependency to network subpackage
+- fix(fcoe-uefi): exit early on empty vlan
+
 * Tue Aug 22 2023 Pavel Valena <pvalena@redhat.com> - 057-44.git20230822
 - feat(hwdb): install hwdb on demand when module is needed
 
