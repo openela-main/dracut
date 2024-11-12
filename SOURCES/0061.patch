@@ -1,0 +1,37 @@
+From f8cb5753f14c65d1371b623f5f0d8e3cb0aa7107 Mon Sep 17 00:00:00 2001
+From: Laszlo Gombos <laszlo.gombos@gmail.com>
+Date: Wed, 19 Oct 2022 12:32:28 +0000
+Subject: [PATCH] ci: remove non-existing modules from labeler
+
+(cherry picked from commit 1d60dd74ee721f17cdaadd56b874b564b89c0145)
+
+Related: RHEL-30581
+---
+ .github/labeler.yml | 6 ------
+ 1 file changed, 6 deletions(-)
+
+diff --git a/.github/labeler.yml b/.github/labeler.yml
+index 0dcc06d4..5667c635 100644
+--- a/.github/labeler.yml
++++ b/.github/labeler.yml
+@@ -50,9 +50,6 @@ bash:
+   - changed-files:
+     - any-glob-to-any-file: 'modules.d/00bash/*'
+ 
+-bootchart:
+-  - modules.d/00bootchart/*
+-
+ dash:
+   - changed-files:
+     - any-glob-to-any-file: 'modules.d/00dash/*'
+@@ -345,9 +342,6 @@ qemu-net:
+   - changed-files:
+     - any-glob-to-any-file: 'modules.d/90qemu-net/*'
+ 
+-stratis:
+-  - modules.d/90stratis/*
+-
+ crypt-gpg:
+   - changed-files:
+     - any-glob-to-any-file: 'modules.d/91crypt-gpg/*'
+

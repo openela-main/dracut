@@ -1,0 +1,52 @@
+From 55108a3a24a1780f6d5273a3e97dbdeb7d2c75c0 Mon Sep 17 00:00:00 2001
+From: Vitaly Kuznetsov <vkuznets@redhat.com>
+Date: Thu, 23 May 2024 14:20:43 +0200
+Subject: [PATCH] fix(fips): remove /dev/{random,urandom} pre-creation
+
+Random device nodes were required to workaround libgcrypt initialization
+problem (see https://bugzilla.redhat.com/show_bug.cgi?id=1401444) which
+is gone since libgcrypt-1.10 (2022): modern Linux kernels (3.17+) support
+getrandom() syscall and libgcrypt has switch to using getentropy()
+(glibc-2.25+).
+
+The requirement to run dracut as root (which is needed to mknod
+/dev/{random,urandom}) is a particular problem for building UKIs in distro
+build systems where packages are not built by a privileged user.
+
+Note, dracut itself always pre-creates /dev/{null,kmsg,console,random,urandom}
+devices when running privileged so the patch has no effect on 'traditional'
+setup.
+
+Signed-off-by: Vitaly Kuznetsov <vkuznets@redhat.com>
+
+(Cherry-picked commit: 62f907e9eb3147ad8603953ec3cf29673d4fae79)
+
+Resolves: RHEL-38830
+---
+ modules.d/01fips/module-setup.sh | 12 ------------
+ 1 file changed, 12 deletions(-)
+
+diff --git a/modules.d/01fips/module-setup.sh b/modules.d/01fips/module-setup.sh
+index 7ff5e640..1dc7ea33 100755
+--- a/modules.d/01fips/module-setup.sh
++++ b/modules.d/01fips/module-setup.sh
+@@ -70,18 +70,6 @@ install() {
+     inst_multiple sha512hmac rmmod insmod mount uname umount grep sed sort
+ 
+     inst_simple /etc/system-fips
+-    [ -c "${initdir}"/dev/random ] || mknod "${initdir}"/dev/random c 1 8 \
+-        || {
+-            dfatal "Cannot create /dev/random"
+-            dfatal "To create an initramfs with fips support, dracut has to run as root"
+-            return 1
+-        }
+-    [ -c "${initdir}"/dev/urandom ] || mknod "${initdir}"/dev/urandom c 1 9 \
+-        || {
+-            dfatal "Cannot create /dev/urandom"
+-            dfatal "To create an initramfs with fips support, dracut has to run as root"
+-            return 1
+-        }
+ 
+     # if we have openssl we need to install their fips library and configuration
+     [ -x /usr/bin/openssl ] && {
+

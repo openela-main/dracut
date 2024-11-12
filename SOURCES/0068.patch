@@ -1,0 +1,35 @@
+From b925190ab3b040c67fb217e0f135c0b92f056402 Mon Sep 17 00:00:00 2001
+From: Pavel Valena <pvalena@redhat.com>
+Date: Fri, 16 Aug 2024 20:40:15 +0200
+Subject: [PATCH] feat(lsinitrd.sh): look for initrd in /usr/lib/modules/
+
+Introduce new path for lsinitrd.sh to look into:
+
+/usr/lib/modules/$kver/initramfs.img
+
+Which is valid on all ostree-based systems, and also other image based
+systems with pre-generated initramfs.
+
+Ref: https://issues.redhat.com/browse/RHEL-35890
+
+(cherry picked from commit 7c7cdd9317c21b19a0393f5d28d1acb7ee3ff027 from PR#582)
+
+Resolves: RHEL-35890
+---
+ lsinitrd.sh | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/lsinitrd.sh b/lsinitrd.sh
+index 39be169d..d05453ce 100755
+--- a/lsinitrd.sh
++++ b/lsinitrd.sh
+@@ -133,6 +133,8 @@ else
+         image="/lib/modules/${KERNEL_VERSION}/initrd"
+     elif [[ -f /boot/initramfs-${KERNEL_VERSION}.img ]]; then
+         image="/boot/initramfs-${KERNEL_VERSION}.img"
++    elif [[ -f /usr/lib/modules/${KERNEL_VERSION}/initramfs.img ]]; then
++        image="/usr/lib/modules/${KERNEL_VERSION}/initramfs.img"
+     elif [[ $MACHINE_ID ]] \
+         && mountpoint -q /efi; then
+         image="/efi/${MACHINE_ID}/${KERNEL_VERSION}/initrd"
+

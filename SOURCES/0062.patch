@@ -1,0 +1,34 @@
+From 79fbe4171a7e42abe40d138a24add2895f7cddcd Mon Sep 17 00:00:00 2001
+From: Beniamino Galvani <bgalvani@redhat.com>
+Date: Tue, 31 Jan 2023 16:32:19 +0100
+Subject: [PATCH] fix(network-manager): add "After" dependency on dbus.service
+
+During shutdown, there is no ordering dependency between the nm-initrd service
+and the D-Bus daemon, and so the latter can be stopped before. This causes
+issues to NetworkManager, especially when team interfaces are present because
+NM will see teamd dropping from the bus and will try to reactivate the
+connection.
+
+Add a "After" dependency to make sure the D-Bus daemon is stopped after NM on
+shutdown.
+
+(Cherry-picked commit: 1b7d83110741560f26027fbd9435763eef56935a)
+
+Resolves: RHEL-13192
+---
+ modules.d/35network-manager/nm-initrd.service | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/modules.d/35network-manager/nm-initrd.service b/modules.d/35network-manager/nm-initrd.service
+index 3e24f52a..dbd8caa7 100644
+--- a/modules.d/35network-manager/nm-initrd.service
++++ b/modules.d/35network-manager/nm-initrd.service
+@@ -3,6 +3,7 @@ DefaultDependencies=no
+ Wants=systemd-udev-trigger.service
+ After=systemd-udev-trigger.service
+ After=dracut-cmdline.service
++After=dbus.service
+ Wants=network.target
+ Before=network.target
+ ConditionPathExists=/run/NetworkManager/initrd/neednet
+

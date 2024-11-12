@@ -5,7 +5,7 @@
 # strip the automatically generated dep here and instead co-own the
 # directory.
 %global __requires_exclude pkg-config
-%define dist_free_release 53.git20240104
+%define dist_free_release 70.git20240819
 
 Name: dracut
 Version: 057
@@ -81,6 +81,23 @@ Patch49: 0049.patch
 Patch50: 0050.patch
 Patch51: 0051.patch
 Patch52: 0052.patch
+Patch53: 0053.patch
+Patch54: 0054.patch
+Patch55: 0055.patch
+Patch56: 0056.patch
+Patch57: 0057.patch
+Patch58: 0058.patch
+Patch59: 0059.patch
+Patch60: 0060.patch
+Patch61: 0061.patch
+Patch62: 0062.patch
+Patch63: 0063.patch
+Patch64: 0064.patch
+Patch65: 0065.patch
+Patch66: 0066.patch
+Patch67: 0067.patch
+Patch68: 0068.patch
+Patch69: 0069.patch
 
 Source1: https://www.gnu.org/licenses/lgpl-2.1.txt
 
@@ -373,6 +390,7 @@ echo 'dracut_rescue_image="yes"' > $RPM_BUILD_ROOT%{dracutlibdir}/dracut.conf.d/
 %{dracutlibdir}/modules.d/01systemd-journald
 %{dracutlibdir}/modules.d/01systemd-ldconfig
 %{dracutlibdir}/modules.d/01systemd-modules-load
+%{dracutlibdir}/modules.d/01systemd-pcrphase
 %{dracutlibdir}/modules.d/01systemd-repart
 %{dracutlibdir}/modules.d/01systemd-resolved
 %{dracutlibdir}/modules.d/01systemd-rfkill
@@ -532,6 +550,24 @@ echo 'dracut_rescue_image="yes"' > $RPM_BUILD_ROOT%{dracutlibdir}/dracut.conf.d/
 %{_prefix}/lib/kernel/install.d/51-dracut-rescue.install
 
 %changelog
+* Mon Aug 19 2024 Pavel Valena <pvalena@redhat.com> - 057-70.git20240819
+- fix(systemd): set right permissions for the machine-id file
+- feat(lsinitrd.sh): look for initrd in /usr/lib/modules/
+- feat(dracut-init.sh): give --force-add precedence over --omit
+
+* Mon Aug 12 2024 Pavel Valena <pvalena@redhat.com> - 057-67.git20240812
+- feat(systemd): install systemd-executor
+- test: use -device instead of -watchdog to remove qemu
+- fix(fips): remove /dev/{random,urandom} pre-creation
+- fix(systemd): always include sg module
+- fix(fips): do not blindly remove /boot
+- fix(github): update format of labeler
+- fix(network-manager): add "After" dependency on dbus.service
+- fix(url-lib.sh): nfs_already_mounted() with trailing slash in
+- feat(systemd-pcrphase): introducing the systemd-pcrphase
+- fix(systemd-pcrphase): only include
+- fix(nfs): include also entries from /usr/lib/{passwd,group}
+
 * Thu Jan 04 2024 Pavel Valena <pvalena@redhat.com> - 057-53.git20240104
 - fix(dracut-install): use stripped kernel module path as hash
 

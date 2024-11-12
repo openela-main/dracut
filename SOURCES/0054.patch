@@ -1,0 +1,124 @@
+From 92bda68884b321195436729b7fcf19ada342c0a9 Mon Sep 17 00:00:00 2001
+From: Laszlo Gombos <laszlo.gombos@gmail.com>
+Date: Thu, 10 Nov 2022 14:20:42 +0000
+Subject: [PATCH] test: use -device instead of -watchdog to remove qemu
+ warnings
+
+(cherry picked from commit 9f6b4e53367be20b2295b77800c73b2614530559)
+
+Related: RHEL-30581
+---
+ test/TEST-01-BASIC/test.sh               | 2 +-
+ test/TEST-03-USR-MOUNT/test.sh           | 2 +-
+ test/TEST-20-NFS/test.sh                 | 4 ++--
+ test/TEST-50-MULTINIC/test.sh            | 4 ++--
+ test/TEST-60-BONDBRIDGEVLANIFCFG/test.sh | 4 ++--
+ test/TEST-63-DRACUT-CPIO/test.sh         | 2 +-
+ 6 files changed, 9 insertions(+), 9 deletions(-)
+
+diff --git a/test/TEST-01-BASIC/test.sh b/test/TEST-01-BASIC/test.sh
+index 390089b6..9f98af2c 100755
+--- a/test/TEST-01-BASIC/test.sh
++++ b/test/TEST-01-BASIC/test.sh
+@@ -17,7 +17,7 @@ test_run() {
+ 
+     "$testdir"/run-qemu \
+         "${disk_args[@]}" \
+-        -watchdog i6300esb -watchdog-action poweroff \
++        -device i6300esb -watchdog-action poweroff \
+         -append "panic=1 oops=panic softlockup_panic=1 systemd.crash_reboot \"root=LABEL=  rdinit=/bin/sh\" rw systemd.log_level=debug systemd.log_target=console rd.retry=3 rd.debug console=ttyS0,115200n81 rd.shell=0 $DEBUGFAIL" \
+         -initrd "$TESTDIR"/initramfs.testing || return 1
+ 
+diff --git a/test/TEST-03-USR-MOUNT/test.sh b/test/TEST-03-USR-MOUNT/test.sh
+index 5cb61bce..57157bc0 100755
+--- a/test/TEST-03-USR-MOUNT/test.sh
++++ b/test/TEST-03-USR-MOUNT/test.sh
+@@ -25,7 +25,7 @@ client_run() {
+ 
+     "$testdir"/run-qemu \
+         "${disk_args[@]}" \
+-        -watchdog i6300esb -watchdog-action poweroff \
++        -device i6300esb -watchdog-action poweroff \
+         -append "panic=1 oops=panic softlockup_panic=1 systemd.crash_reboot root=LABEL=dracut $client_opts loglevel=7 rd.retry=3 rd.info console=ttyS0,115200n81 selinux=0 rd.debug rd.shell=0 $DEBUGFAIL" \
+         -initrd "$TESTDIR"/initramfs.testing || return 1
+ 
+diff --git a/test/TEST-20-NFS/test.sh b/test/TEST-20-NFS/test.sh
+index 0be60a80..0821dc84 100755
+--- a/test/TEST-20-NFS/test.sh
++++ b/test/TEST-20-NFS/test.sh
+@@ -33,7 +33,7 @@ run_server() {
+         -net socket,listen=127.0.0.1:12320 \
+         -net nic,macaddr=52:54:00:12:34:56,model=e1000 \
+         -serial "${SERIAL:-"file:$TESTDIR/server.log"}" \
+-        -watchdog i6300esb -watchdog-action poweroff \
++        -device i6300esb -watchdog-action poweroff \
+         -append "panic=1 oops=panic softlockup_panic=1 root=LABEL=dracut rootfstype=ext3 rw console=ttyS0,115200n81 selinux=0 $SERVER_DEBUG" \
+         -initrd "$TESTDIR"/initramfs.server \
+         -pidfile "$TESTDIR"/server.pid -daemonize || return 1
+@@ -78,7 +78,7 @@ client_test() {
+         "${disk_args[@]}" \
+         -net nic,macaddr="$mac",model=e1000 \
+         -net socket,connect=127.0.0.1:12320 \
+-        -watchdog i6300esb -watchdog-action poweroff \
++        -device i6300esb -watchdog-action poweroff \
+         -append "panic=1 oops=panic softlockup_panic=1 systemd.crash_reboot rd.shell=0 $cmdline $DEBUGFAIL rd.retry=10 quiet ro console=ttyS0,115200n81 selinux=0" \
+         -initrd "$TESTDIR"/initramfs.testing
+ 
+diff --git a/test/TEST-50-MULTINIC/test.sh b/test/TEST-50-MULTINIC/test.sh
+index 81b1f685..47408983 100755
+--- a/test/TEST-50-MULTINIC/test.sh
++++ b/test/TEST-50-MULTINIC/test.sh
+@@ -31,7 +31,7 @@ run_server() {
+         -net socket,listen=127.0.0.1:12350 \
+         -net nic,macaddr=52:54:01:12:34:56,model=e1000 \
+         -serial "${SERIAL:-"file:$TESTDIR/server.log"}" \
+-        -watchdog i6300esb -watchdog-action poweroff \
++        -device i6300esb -watchdog-action poweroff \
+         -append "panic=1 oops=panic softlockup_panic=1 systemd.crash_reboot root=LABEL=dracut rootfstype=ext3 rw console=ttyS0,115200n81 selinux=0" \
+         -initrd "$TESTDIR"/initramfs.server \
+         -pidfile "$TESTDIR"/server.pid -daemonize || return 1
+@@ -85,7 +85,7 @@ client_test() {
+         -netdev hubport,id=n2,hubid=2 \
+         -device e1000,netdev=n1,mac=52:54:00:12:34:98 \
+         -device e1000,netdev=n2,mac=52:54:00:12:34:99 \
+-        -watchdog i6300esb -watchdog-action poweroff \
++        -device i6300esb -watchdog-action poweroff \
+         -append "quiet panic=1 oops=panic softlockup_panic=1 systemd.crash_reboot rd.shell=0 $cmdline $DEBUGFAIL rd.retry=5 ro console=ttyS0,115200n81 selinux=0 init=/sbin/init rd.debug systemd.log_target=console" \
+         -initrd "$TESTDIR"/initramfs.testing || return 1
+ 
+diff --git a/test/TEST-60-BONDBRIDGEVLANIFCFG/test.sh b/test/TEST-60-BONDBRIDGEVLANIFCFG/test.sh
+index 309600d4..8f9f0cfd 100755
+--- a/test/TEST-60-BONDBRIDGEVLANIFCFG/test.sh
++++ b/test/TEST-60-BONDBRIDGEVLANIFCFG/test.sh
+@@ -35,7 +35,7 @@ run_server() {
+         -device virtio-net-pci,netdev=n3,mac=52:54:01:12:34:59 \
+         -hda "$TESTDIR"/server.ext3 \
+         -serial "${SERIAL:-"file:$TESTDIR/server.log"}" \
+-        -watchdog i6300esb -watchdog-action poweroff \
++        -device i6300esb -watchdog-action poweroff \
+         -append "panic=1 oops=panic softlockup_panic=1 loglevel=7 root=LABEL=dracut rootfstype=ext3 rw console=ttyS0,115200n81 selinux=0 rd.debug" \
+         -initrd "$TESTDIR"/initramfs.server \
+         -pidfile "$TESTDIR"/server.pid -daemonize || return 1
+@@ -90,7 +90,7 @@ client_test() {
+         -netdev socket,connect=127.0.0.1:12372,id=n2 -device virtio-net-pci,mac=52:54:00:12:34:04,netdev=n2 \
+         "${nic3[@]}" -device virtio-net-pci,mac=52:54:00:12:34:05,netdev=n3 \
+         -hda "$TESTDIR"/client.img \
+-        -watchdog i6300esb -watchdog-action poweroff \
++        -device i6300esb -watchdog-action poweroff \
+         -append "
+         panic=1 oops=panic softlockup_panic=1
+         ifname=net1:52:54:00:12:34:01
+diff --git a/test/TEST-63-DRACUT-CPIO/test.sh b/test/TEST-63-DRACUT-CPIO/test.sh
+index 8e319bf2..be93cfb5 100755
+--- a/test/TEST-63-DRACUT-CPIO/test.sh
++++ b/test/TEST-63-DRACUT-CPIO/test.sh
+@@ -39,7 +39,7 @@ EOF
+         || return 1
+ 
+     "$testdir"/run-qemu \
+-        -watchdog i6300esb -watchdog-action poweroff \
++        -device i6300esb -watchdog-action poweroff \
+         -daemonize -pidfile "$tdir/vm.pid" \
+         -serial "file:$tdir/console.out" \
+         -append "panic=1 oops=panic softlockup_panic=1 loglevel=7 console=ttyS0 rd.shell=1" \
+

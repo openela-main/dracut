@@ -1,0 +1,86 @@
+From 813a79d80b272d30ea949b070b436d2bb487df24 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?J=C3=B3hann=20B=2E=20Gu=C3=B0mundsson?= <johannbg@gmail.com>
+Date: Sun, 23 Oct 2022 10:54:48 +0000
+Subject: [PATCH] feat(systemd-pcrphase): introducing the systemd-pcrphase
+ module
+
+Introducing the systemd-pcrphase module
+
+(Cherry-picked commit: c4c595ceeab79fefde74750ec6b0d15d7d16ede6)
+
+Resolves: RHEL-27944
+---
+ modules.d/01systemd-pcrphase/module-setup.sh | 51 ++++++++++++++++++++++++++++
+ pkgbuild/dracut.spec                         |  1 +
+ 2 files changed, 52 insertions(+)
+
+diff --git a/modules.d/01systemd-pcrphase/module-setup.sh b/modules.d/01systemd-pcrphase/module-setup.sh
+new file mode 100755
+index 00000000..3dbb4974
+--- /dev/null
++++ b/modules.d/01systemd-pcrphase/module-setup.sh
+@@ -0,0 +1,51 @@
++#!/bin/bash
++# This file is part of dracut.
++# SPDX-License-Identifier: GPL-2.0-or-later
++
++# Prerequisite check(s) for module.
++check() {
++
++    # If the binary(s) requirements are not fulfilled the module can't be installed.
++    require_binaries "$systemdutildir"/systemd-pcrphase || return 1
++
++    # Return 255 to only include the module, if another module requires it.
++    return 255
++
++}
++
++# Module dependency requirements.
++depends() {
++
++    # This module has external dependency on other module(s).
++    echo systemd tpm2-tss
++    # Return 0 to include the dependent module(s) in the initramfs.
++    return 0
++
++}
++
++# Install the required file(s) and directories for the module in the initramfs.
++install() {
++
++    inst_multiple -o \
++        "$systemdutildir"/systemd-pcrphase \
++        "$systemdsystemunitdir"/systemd-pcrphase.service \
++        "$systemdsystemunitdir/systemd-pcrphase.service.d/*.conf" \
++        "$systemdsystemunitdir"/systemd-pcrphase-sysinit.service \
++        "$systemdsystemunitdir/systemd-pcrphase-sysinit.service/*.conf" \
++        "$systemdsystemunitdir"/systemd-pcrphase-initrd.service \
++        "$systemdsystemunitdir/systemd-pcrphase-initrd.service.d/*.conf" \
++        "$systemdsystemunitdir"/initrd.target.wants/systemd-pcrphase-initrd.service
++
++    # Install the hosts local user configurations if enabled.
++    if [[ $hostonly ]]; then
++        inst_multiple -H -o \
++            "$systemdsystemconfdir"/systemd-pcrphase.service \
++            "$systemdsystemconfdir/systemd-pcrphase.service.d/*.conf" \
++            "$systemdsystemconfdir"/systemd-pcrphase-sysinit.service \
++            "$systemdsystemconfdir/systemd-pcrphase-sysinit.service.d/*.conf" \
++            "$systemdsystemconfdir"/systemd-pcrphase-initrd.service \
++            "$systemdsystemconfdir/systemd-pcrphase-initrd.service.d/*.conf" \
++            "$systemdsystemconfdir"/initrd.target.wants/systemd-pcrphase-initrd.service
++    fi
++
++}
+diff --git a/pkgbuild/dracut.spec b/pkgbuild/dracut.spec
+index bd850986..0fa46d86 100644
+--- a/pkgbuild/dracut.spec
++++ b/pkgbuild/dracut.spec
+@@ -320,6 +320,7 @@ echo 'dracut_rescue_image="yes"' > $RPM_BUILD_ROOT%{dracutlibdir}/dracut.conf.d/
+ %{dracutlibdir}/modules.d/01systemd-journald
+ %{dracutlibdir}/modules.d/01systemd-ldconfig
+ %{dracutlibdir}/modules.d/01systemd-modules-load
++%{dracutlibdir}/modules.d/01systemd-pcrphase
+ %{dracutlibdir}/modules.d/01systemd-repart
+ %{dracutlibdir}/modules.d/01systemd-resolved
+ %{dracutlibdir}/modules.d/01systemd-rfkill
+

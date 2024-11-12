@@ -1,0 +1,31 @@
+From 2dcfc99c645aaeef3811e5278c399e4f78d9ce4c Mon Sep 17 00:00:00 2001
+From: Frantisek Sumsal <frantisek@sumsal.cz>
+Date: Sat, 14 Oct 2023 23:45:57 +0200
+Subject: [PATCH] feat(systemd): install systemd-executor
+
+In [0] systemd gained a new binary - systemd-executor - that's used to
+spawn processes forked off systemd. Let's copy it into the initrd if
+it's available.
+
+[0] https://github.com/systemd/systemd/pull/27890
+
+(cherry picked from commit bee1c4824a8cd47ce6c01892a548bdc07b1fa678)
+
+Related: RHEL-30581
+---
+ modules.d/00systemd/module-setup.sh | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/modules.d/00systemd/module-setup.sh b/modules.d/00systemd/module-setup.sh
+index 2a4fe4ba..a4397249 100755
+--- a/modules.d/00systemd/module-setup.sh
++++ b/modules.d/00systemd/module-setup.sh
+@@ -34,6 +34,7 @@ install() {
+         "$systemdutildir"/systemd \
+         "$systemdutildir"/systemd-coredump \
+         "$systemdutildir"/systemd-cgroups-agent \
++        "$systemdutildir"/systemd-executor \
+         "$systemdutildir"/systemd-shutdown \
+         "$systemdutildir"/systemd-reply-password \
+         "$systemdutildir"/systemd-fsck \
+

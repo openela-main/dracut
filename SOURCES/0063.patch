@@ -1,0 +1,174 @@
+From 75691dfaa822a7ce32e4f97141975d9b10f3101e Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?=E2=80=9CMasahiro?= <mmatsuya@redhat.com>
+Date: Fri, 3 Feb 2023 12:08:26 +0900
+Subject: [PATCH] fix(url-lib.sh): nfs_already_mounted() with trailing slash in
+ nfs path
+
+nfs_already_mounted() doesn't work when the installation ISO and kickstart file on a same NFS share are specified with inst.repo and inst.ks boot parameter as below.
+
+   inst.repo=nfs:192.168.1.1:/home/data/rhel9.iso inst.ks=nfs:192.168.1.1:/home/data/ks.cfg
+
+   NOTE: /home/data is configured for nfs share on 192.168.1.1
+
+One problem is a file (not a directory) was passed into nfs_already_mounted().
+nfs_already_mounted() is the function to judge if the given directory is already mounted.
+So, filepath should be passed in nfs_fetch_url().
+
+The other problem is about the trailing slash in the nfs path in /proc/mounts.
+
+The /proc/mounts has an entry after nfs mount of inst.repo.
+
+   192.168.1.1:/data/   /run/install/isodir  nfs  ro,relatime,<snip>
+
+In this case, nfs_already_mounted() returns "/run/install/isodir//home/data/ks.cfg" wrongly. The following is from the log.
+
+[   14.556279] localhost.localdomain dracut-initqueue[1282]: ///lib/url-lib.sh@156(nfs_fetch_url): nfs_already_mounted 192.168.122.1 /home/data/ks.cfg
+[   14.556279] localhost.localdomain dracut-initqueue[1282]: ///lib/url-lib.sh@137(nfs_already_mounted): local server=192.168.122.1 path=/home/data/ks.cfg s= p=
+...
+[   14.654966] localhost.localdomain dracut-initqueue[1282]: ///lib/url-lib.sh@140(nfs_already_mounted): '[' 192.168.122.1 = 192.168.122.1 ']'
+[   14.654966] localhost.localdomain dracut-initqueue[1282]: ///lib/url-lib.sh@141(nfs_already_mounted): '[' /home/data/ks.cfg = /home/data/ ']'
+[   14.654966] localhost.localdomain dracut-initqueue[1282]: ///lib/url-lib.sh@143(nfs_already_mounted): str_starts /home/data/ks.cfg /home/data/
+[   14.654966] localhost.localdomain dracut-initqueue[1282]: ///lib/dracut-lib.sh@51(str_starts): '[' ks.cfg '!=' /home/data/ks.cfg ']'
+[   14.654966] localhost.localdomain dracut-initqueue[1282]: ///lib/url-lib.sh@144(nfs_already_mounted): echo /run/install/isodir//home/data/ks.cfg
+...
+[   14.658069] localhost.localdomain dracut-initqueue[934]: //lib/url-lib.sh@156(nfs_fetch_url): mntdir=/run/install/isodir//home/data/ks.cfg
+
+This function doesn't expect the trailiing slash of the nfs path in /proc/mounts, so it should be removed before processing it.
+
+feat(test): nfs_fetch_url test into nfs test
+
+This is to check the behavior of nfs_fetch_url() in nfs-lib.sh.
+nfs_fetch_url() calls nfs_already_mounted() internally.
+A file /nfs/client/root/fetchfile is on NFS server, which is fetched
+from clients for testing with nfs_fetch_url().
+
+(Cherry-picked commits:
+  b731369c5fe7f9247337fe08017638a38f36cfca
+  3cf092dbd8754a31595b0d8447827c6358fc3a88)
+
+Resolves: RHEL-13193
+---
+ modules.d/45url-lib/url-lib.sh  |  3 ++-
+ test/TEST-20-NFS/client-init.sh | 20 ++++++++++++++++++++
+ test/TEST-20-NFS/test.sh        | 14 +++++++++++++-
+ 3 files changed, 35 insertions(+), 2 deletions(-)
+
+diff --git a/modules.d/45url-lib/url-lib.sh b/modules.d/45url-lib/url-lib.sh
+index b009fd09..c62b35db 100755
+--- a/modules.d/45url-lib/url-lib.sh
++++ b/modules.d/45url-lib/url-lib.sh
+@@ -137,6 +137,7 @@ nfs_already_mounted() {
+     local server="$1" path="$2" s="" p=""
+     while read -r src mnt rest || [ -n "$src" ]; do
+         splitsep ":" "$src" s p
++        p=${p%/}
+         if [ "$server" = "$s" ]; then
+             if [ "$path" = "$p" ]; then
+                 echo "$mnt"
+@@ -153,7 +154,7 @@ nfs_fetch_url() {
+     local filepath="${path%/*}" filename="${path##*/}" mntdir=""
+ 
+     # skip mount if server:/filepath is already mounted
+-    mntdir=$(nfs_already_mounted "$server" "$path")
++    mntdir=$(nfs_already_mounted "$server" "$filepath")
+     if [ -z "$mntdir" ]; then
+         local mntdir
+         mntdir="$(mkuniqdir /run nfs_mnt)"
+diff --git a/test/TEST-20-NFS/client-init.sh b/test/TEST-20-NFS/client-init.sh
+index c7e88314..061a2b15 100755
+--- a/test/TEST-20-NFS/client-init.sh
++++ b/test/TEST-20-NFS/client-init.sh
+@@ -1,6 +1,7 @@
+ #!/bin/sh
+ : > /dev/watchdog
+ . /lib/dracut-lib.sh
++. /lib/url-lib.sh
+ 
+ export PATH=/usr/sbin:/usr/bin:/sbin:/bin
+ command -v plymouth > /dev/null 2>&1 && plymouth --quit
+@@ -23,6 +24,25 @@ while read -r dev _ fstype opts rest || [ -n "$dev" ]; do
+     break
+ done < /proc/mounts
+ 
++if [ "$fstype" = "nfs" -o "$fstype" = "nfs4" ]; then
++
++    serverip=${dev%:*}
++    path=${dev#*:}
++    echo serverip="${serverip}"
++    echo path="${path}"
++    echo /proc/mounts status
++    cat /proc/mounts
++
++    echo test:nfs_fetch_url nfs::"${serverip}":"${path}"/root/fetchfile
++    if nfs_fetch_url nfs::"${serverip}":"${path}"/root/fetchfile /run/nfsfetch.out; then
++        echo nfsfetch-OK
++        echo "nfsfetch-OK" | dd oflag=direct,dsync of=/dev/disk/by-id/ata-disk_marker2
++    fi
++else
++    echo nfsfetch-BYPASS fstype="${fstype}"
++    echo "nfsfetch-OK" | dd oflag=direct,dsync of=/dev/disk/by-id/ata-disk_marker2
++fi
++
+ : > /dev/watchdog
+ 
+ sync
+diff --git a/test/TEST-20-NFS/test.sh b/test/TEST-20-NFS/test.sh
+index 0821dc84..870eeba0 100755
+--- a/test/TEST-20-NFS/test.sh
++++ b/test/TEST-20-NFS/test.sh
+@@ -65,13 +65,15 @@ client_test() {
+ 
+     # Need this so kvm-qemu will boot (needs non-/dev/zero local disk)
+     dd if=/dev/zero of="$TESTDIR"/marker.img bs=1MiB count=1
++    dd if=/dev/zero of="$TESTDIR"/marker2.img bs=1MiB count=1
+     declare -a disk_args=()
+     # shellcheck disable=SC2034
+     declare -i disk_index=0
+     qemu_add_drive_args disk_index disk_args "$TESTDIR"/marker.img marker
++    qemu_add_drive_args disk_index disk_args "$TESTDIR"/marker2.img marker2
+ 
+     if dhclient --help 2>&1 | grep -q -F -- '--timeout' 2> /dev/null; then
+-        cmdline="$cmdline rd.net.timeout.dhcp=3"
++        cmdline="$cmdline rd.net.timeout.dhcp=30"
+     fi
+ 
+     "$testdir"/run-qemu \
+@@ -126,6 +128,11 @@ client_test() {
+         return 1
+     fi
+ 
++    if ! grep -U --binary-files=binary -F -m 1 -q nfsfetch-OK "$TESTDIR"/marker2.img; then
++        echo "CLIENT TEST END: $test_name [FAILED - NFS FETCH FAILED]"
++        return 1
++    fi
++
+     echo "CLIENT TEST END: $test_name [OK]"
+     return 0
+ }
+@@ -263,6 +270,7 @@ test_setup() {
+         done
+         type -P portmap > /dev/null && inst_multiple portmap
+         type -P rpcbind > /dev/null && inst_multiple rpcbind
++
+         [ -f /etc/netconfig ] && inst_multiple /etc/netconfig
+         type -P dhcpd > /dev/null && inst_multiple dhcpd
+         [ -x /usr/sbin/dhcpd3 ] && inst /usr/sbin/dhcpd3 /usr/sbin/dhcpd
+@@ -308,6 +316,7 @@ test_setup() {
+         (
+             cd "$initdir" || exit
+             mkdir -p dev sys proc etc run root usr var/lib/nfs/rpc_pipefs
++            echo "TEST FETCH FILE" > root/fetchfile
+         )
+ 
+         inst_multiple sh shutdown poweroff stty cat ps ln ip dd \
+@@ -321,6 +330,9 @@ test_setup() {
+ 
+         inst_simple "${basedir}/modules.d/99base/dracut-lib.sh" "/lib/dracut-lib.sh"
+         inst_simple "${basedir}/modules.d/99base/dracut-dev-lib.sh" "/lib/dracut-dev-lib.sh"
++        inst_simple "${basedir}/modules.d/45url-lib/url-lib.sh" "/lib/url-lib.sh"
++        inst_simple "${basedir}/modules.d/40network/net-lib.sh" "/lib/net-lib.sh"
++        inst_simple "${basedir}/modules.d/95nfs/nfs-lib.sh" "/lib/nfs-lib.sh"
+         inst_binary "${basedir}/dracut-util" "/usr/bin/dracut-util"
+         ln -s dracut-util "${initdir}/usr/bin/dracut-getarg"
+         ln -s dracut-util "${initdir}/usr/bin/dracut-getargs"
+

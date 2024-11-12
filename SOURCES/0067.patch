@@ -1,0 +1,25 @@
+From f194130f4f15d2c8159fb8adee76bb53ee5b82f5 Mon Sep 17 00:00:00 2001
+From: Antonio Alvarez Feijoo <antonio.feijoo@suse.com>
+Date: Mon, 18 Jul 2022 11:03:32 +0200
+Subject: [PATCH] fix(systemd): set right permissions for the machine-id file
+
+(cherry picked from commit 455dbb585583bd2e1d40ebb61c335a2ad6dff053)
+
+Resolves: RHEL-53114
+---
+ modules.d/00systemd/module-setup.sh | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/modules.d/00systemd/module-setup.sh b/modules.d/00systemd/module-setup.sh
+index 27d2180d..38393855 100755
+--- a/modules.d/00systemd/module-setup.sh
++++ b/modules.d/00systemd/module-setup.sh
+@@ -194,6 +194,7 @@ install() {
+ 
+     if ! [[ -e "$initdir/etc/machine-id" ]]; then
+         : > "$initdir/etc/machine-id"
++        chmod 444 "$initdir/etc/machine-id"
+     fi
+ 
+     # install adm user/group for journald
+
