@@ -1,0 +1,52 @@
+From 9946f5f3a5e8686a68c757973560da8f3949582b Mon Sep 17 00:00:00 2001
+From: Adrien Thierry <athierry@redhat.com>
+Date: Mon, 13 Feb 2023 10:43:32 -0500
+Subject: [PATCH] fix(kernel-modules): use modalias info in get_dev_module()
+
+When calling dracut with '--hostonly-mode=strict', get_dev_module() gets
+called on the system's block devices to find the required drivers. The
+driver name is retrieved using udevadm. However, the driver name
+returned by udevadm is not necessarily the same as the module name.
+This is the case for the Qualcomm UFS driver: udevadm returns
+'ufshcd-qcom' while the module name is 'ufs-qcom', so dracut-install is
+not able to find the module afterwards.
+
+To solve this, make get_dev_module() also return the module alias info
+from the modalias files contained in the sysfs directories parsed by
+udevadm.
+
+Signed-off-by: Adrien Thierry <athierry@redhat.com>
+
+(cherry picked from commit 87a76dbb578aff473e690857d1b714eacd92b9ec)
+
+Resolves: RHEL-79790
+---
+ dracut-functions.sh | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+diff --git a/dracut-functions.sh b/dracut-functions.sh
+index 3c475ca7..f2614308 100755
+--- a/dracut-functions.sh
++++ b/dracut-functions.sh
+@@ -971,8 +971,20 @@ block_is_netdevice() {
+ get_dev_module() {
+     local dev_attr_walk
+     local dev_drivers
++    local dev_paths
+     dev_attr_walk=$(udevadm info -a "$1")
+     dev_drivers=$(echo "$dev_attr_walk" | sed -n 's/\s*DRIVERS=="\(\S\+\)"/\1/p')
++
++    # also return modalias info from sysfs paths parsed by udevadm
++    dev_paths=$(echo "$dev_attr_walk" | sed -n 's/.*\(\/devices\/.*\)'\'':/\1/p')
++    local dev_path
++    for dev_path in $dev_paths; do
++        local modalias_file="/sys$dev_path/modalias"
++        if [ -e "$modalias_file" ]; then
++            dev_drivers="$(printf "%s\n%s" "$dev_drivers" "$(cat "$modalias_file")")"
++        fi
++    done
++
+     # if no kernel modules found and device is in a virtual subsystem, follow symlinks
+     if [[ -z $dev_drivers && $(udevadm info -q path "$1") == "/devices/virtual"* ]]; then
+         local dev_vkernel
+

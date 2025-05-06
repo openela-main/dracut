@@ -5,7 +5,7 @@
 # strip the automatically generated dep here and instead co-own the
 # directory.
 %global __requires_exclude pkg-config
-%define dist_free_release 70.git20240819
+%define dist_free_release 80.git20250411
 
 Name: dracut
 Version: 057
@@ -98,6 +98,12 @@ Patch66: 0066.patch
 Patch67: 0067.patch
 Patch68: 0068.patch
 Patch69: 0069.patch
+Patch71: 0071.patch
+Patch72: 0072.patch
+Patch76: 0076.patch
+Patch77: 0077.patch
+Patch78: 0078.patch
+Patch79: 0079.patch
 
 Source1: https://www.gnu.org/licenses/lgpl-2.1.txt
 
@@ -550,6 +556,13 @@ echo 'dracut_rescue_image="yes"' > $RPM_BUILD_ROOT%{dracutlibdir}/dracut.conf.d/
 %{_prefix}/lib/kernel/install.d/51-dracut-rescue.install
 
 %changelog
+* Fri Apr 11 2025 Pavel Valena <pvalena@redhat.com> - 057-80.git20250411
+- fix(kernel-modules): use modalias info in get_dev_module()
+- fix(dracut-functions.sh): convert mmcblk to the real kernel
+- fix(35network-manager): install nftables kernel modules
+- fix(35network-manager): install nft binary during module
+- feat(dracut.sh): add --add-confdir option
+
 * Mon Aug 19 2024 Pavel Valena <pvalena@redhat.com> - 057-70.git20240819
 - fix(systemd): set right permissions for the machine-id file
 - feat(lsinitrd.sh): look for initrd in /usr/lib/modules/

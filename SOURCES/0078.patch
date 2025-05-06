@@ -1,0 +1,138 @@
+From 435761690260fbec6d6e3a315d9729d3eb98b5e0 Mon Sep 17 00:00:00 2001
+From: Lichen Liu <lichliu@redhat.com>
+Date: Wed, 7 Aug 2024 10:13:37 +0800
+Subject: [PATCH] feat(dracut.sh): add --add-confdir option
+
+When generating kdump's initrd, we want to keep [omit_]dracutmodules
+empty and let kdump to handle the modules. And we don't want to
+affect the first kernel's initrd, so we cannot place our conf file
+to /etc/dracut.conf.d or /usr/lib/dracut/dracut.conf.d.
+
+This patch adds a new option to allow user to add an extra configuration
+directory to use *.conf files from. If the dir not exists, will look for
+confdir's subdir.
+
+After that, kdump can use "--add-confdir kdump" if
+/usr/lib/dracut/dracut.conf.d/kdump exists, to apply its own dracut conf.
+
+See also:
+https://github.com/rhkdump/kdump-utils/issues/11
+https://github.com/rhkdump/kdump-utils/pull/31
+
+Suggested-by: Dave Young <dyoung@redhat.com>
+Signed-off-by: Lichen Liu <lichliu@redhat.com>
+
+(cherry picked from commit ae81535037c42b716d8cbb9dc18942b5c6f16fed)
+
+Resolves: RHEL-74399
+---
+ dracut.sh                    | 25 ++++++++++++++++++++++++-
+ man/dracut.8.asc             |  8 ++++++++
+ shell-completion/bash/dracut |  4 ++--
+ 3 files changed, 34 insertions(+), 3 deletions(-)
+
+diff --git a/dracut.sh b/dracut.sh
+index 778eefd7..7e4b0602 100755
+--- a/dracut.sh
++++ b/dracut.sh
+@@ -156,6 +156,9 @@ Creates initial ramdisk images for preloading modules
+                          Default: /etc/dracut.conf
+   --confdir [DIR]       Specify configuration directory to use *.conf files
+                          from. Default: /etc/dracut.conf.d
++  --add-confdir [DIR]   Add an extra configuration directory to use *.conf
++                         files from. If the directory is not existed, will
++                         look for subdirectory under confdir.
+   --tmpdir [DIR]        Temporary directory to be used instead of default
+                          ${TMPDIR:-/var/tmp}.
+   -r, --sysroot [DIR]   Specify sysroot directory to collect files from.
+@@ -400,6 +403,7 @@ rearrange_params() {
+             --long kmoddir: \
+             --long conf: \
+             --long confdir: \
++            --long add-confdir: \
+             --long tmpdir: \
+             --long sysroot: \
+             --long stdlog: \
+@@ -676,6 +680,11 @@ while :; do
+             PARMS_TO_STORE+=" '$2'"
+             shift
+             ;;
++        --add-confdir)
++            add_confdir="$2"
++            PARMS_TO_STORE+=" '$2'"
++            shift
++            ;;
+         --tmpdir)
+             tmpdir_l="$2"
+             PARMS_TO_STORE+=" '$2'"
+@@ -931,6 +940,20 @@ elif [[ ! -d $confdir ]]; then
+     exit 1
+ fi
+ 
++if [[ -n $add_confdir ]]; then
++    if [[ -d $add_confdir ]]; then
++        :
++    # Check if it exists under $confdir.
++    elif [[ -d $confdir/$add_confdir ]]; then
++        add_confdir="$confdir/$add_confdir"
++    elif [[ -d $dracutbasdir/dracut.conf.d/$add_confdir ]]; then
++        add_confdir="$dracutbasdir/dracut.conf.d/$add_confdir"
++    else
++        printf "%s\n" "dracut[F]: Configuration directory '$add_confdir' not found." >&2
++        exit 1
++    fi
++fi
++
+ # source our config file
+ if [[ -f $conffile ]]; then
+     check_conf_file "$conffile"
+@@ -939,7 +962,7 @@ if [[ -f $conffile ]]; then
+ fi
+ 
+ # source our config dir
+-for f in $(dropindirs_sort ".conf" "$confdir" "$dracutbasedir/dracut.conf.d"); do
++for f in $(dropindirs_sort ".conf" "$confdir" "$add_confdir" "$dracutbasedir/dracut.conf.d"); do
+     check_conf_file "$f"
+     # shellcheck disable=SC1090
+     [[ -e $f ]] && . "$f"
+diff --git a/man/dracut.8.asc b/man/dracut.8.asc
+index 8339e8a9..15ae36e6 100644
+--- a/man/dracut.8.asc
++++ b/man/dracut.8.asc
+@@ -311,6 +311,14 @@ Default:
+ Default:
+    _/etc/dracut.conf.d_
+ 
++**--add-confdir** _<configuration directory>_::
++    Add an extra configuration directory to use *.conf files from. If the
++    directory is not existed, will look for subdirectory under confdir.
+++
++Default:
++    _empty_
++
++
+ **--tmpdir** _<temporary directory>_::
+     Specify temporary directory to use.
+ +
+diff --git a/shell-completion/bash/dracut b/shell-completion/bash/dracut
+index 9b51db01..bc14aa9a 100644
+--- a/shell-completion/bash/dracut
++++ b/shell-completion/bash/dracut
+@@ -46,14 +46,14 @@ _dracut() {
+             --kernel-cmdline --sshkey --persistent-policy --install-optional
+             --loginstall --uefi-stub --kernel-image --squash-compressor
+             --sysroot --hostonly-mode --hostonly-nics --include --logfile
+-            --uefi-splash-image --sbat
++            --uefi-splash-image --sbat --add-confdir
+             '
+     )
+ 
+     # shellcheck disable=SC2086
+     if __contains_word "$prev" ${OPTS[ARG]}; then
+         case $prev in
+-            --kmoddir | -k | --fwdir | --confdir | --tmpdir | -r | --sysroot)
++            --kmoddir | -k | --fwdir | --confdir | --add-confdir | --tmpdir | -r | --sysroot)
+                 comps=$(compgen -d -- "$cur")
+                 compopt -o filenames
+                 ;;
+

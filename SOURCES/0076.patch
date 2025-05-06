@@ -1,0 +1,34 @@
+From d1dabed5f534a64e87b9e1f528f1d5eee955f35f Mon Sep 17 00:00:00 2001
+From: Fernando Fernandez Mancera <ffmancera@riseup.net>
+Date: Tue, 26 Nov 2024 11:27:54 +0100
+Subject: [PATCH] fix(35network-manager): install nftables kernel modules
+ needed
+
+NetworkManager requires nf_tables, nfnetlink and nft_fwd_netdev kernel
+modules to operate balance-slb bonding mode.
+
+Fixes a6264d1726d9 ("fix(35network-manager): install nft binary during module installation")
+
+(cherry picked from commit 037da383dd8d9d9d699f1430d6afc790b28b18f8)
+
+Resolves: RHEL-69461
+
+rhel-only
+---
+ modules.d/35network-manager/module-setup.sh | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/modules.d/35network-manager/module-setup.sh b/modules.d/35network-manager/module-setup.sh
+index c93c6a3c..2c1fe718 100755
+--- a/modules.d/35network-manager/module-setup.sh
++++ b/modules.d/35network-manager/module-setup.sh
+@@ -16,7 +16,7 @@ depends() {
+ 
+ # called by dracut
+ installkernel() {
+-    return 0
++    instmods nf_tables nfnetlink nft_fwd_netdev
+ }
+ 
+ # called by dracut
+

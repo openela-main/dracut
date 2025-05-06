@@ -1,0 +1,84 @@
+From 10999c66b7d7c375e24224b572f89dc60311ad67 Mon Sep 17 00:00:00 2001
+From: Tao Liu <ltao@redhat.com>
+Date: Wed, 12 Apr 2023 23:02:25 +0800
+Subject: [PATCH] fix(dracut-functions.sh): convert mmcblk to the real kernel
+ module name
+
+In some x86_64 platforms such as Intel Elkhartlake, an issue of missing
+necessary modules due to udevadm drivers field unmatch the real kernel module
+name is found:
+
+  $ udevadm info -a /dev/block/179:1
+
+  looking at parent device '/devices/pci0000:00/0000:00:1a.0/mmc_host/mmc0/mmc0:0001':
+    KERNELS=="mmc0:0001"
+    SUBSYSTEMS=="mmc"
+    DRIVERS=="mmcblk"
+    ....
+
+The DRIVERS field, aka mmcblk will be given to instmods to install the
+corresponding mmc_block.ko kernel module. However mmc_block.ko cannot be
+selected by string mmcblk, as a result, mmc_block.ko cannot be installed
+in hostonly-mode strict, which will fail to bootup the machine such as in
+kdump cases:
+
+  $ /usr/lib/dracut/dracut-install -D /var/tmp --kerneldir /lib/modules/$(uname -r)/ -m mmcblk
+  dracut-install: Failed to find module 'mmcblk'
+
+In this patch, we will convert the string mmcblk to mmc_block, so the
+kernel module can be successfully loaded.
+
+Signed-off-by: Tao Liu <ltao@redhat.com>
+
+(cherry picked from commit a62e895db9510f0fc4c47ee81b1436096eca4d64)
+
+Resolves: RHEL-79790
+---
+ dracut-functions.sh | 20 +++++++++++++++++++-
+ 1 file changed, 19 insertions(+), 1 deletion(-)
+
+diff --git a/dracut-functions.sh b/dracut-functions.sh
+index f2614308..2e582ebc 100755
+--- a/dracut-functions.sh
++++ b/dracut-functions.sh
+@@ -967,13 +967,30 @@ block_is_netdevice() {
+     block_is_nbd "$1" || block_is_iscsi "$1" || block_is_fcoe "$1"
+ }
+ 
++# convert the driver name given by udevadm to the corresponding kernel module name
++get_module_name() {
++    local dev_driver
++    while read -r dev_driver; do
++        case "$dev_driver" in
++            mmcblk)
++                echo "mmc_block"
++                ;;
++            *)
++                echo "$dev_driver"
++                ;;
++        esac
++    done
++}
++
+ # get the corresponding kernel modules of a /sys/class/*/* or/dev/* device
+ get_dev_module() {
+     local dev_attr_walk
+     local dev_drivers
+     local dev_paths
+     dev_attr_walk=$(udevadm info -a "$1")
+-    dev_drivers=$(echo "$dev_attr_walk" | sed -n 's/\s*DRIVERS=="\(\S\+\)"/\1/p')
++    dev_drivers=$(echo "$dev_attr_walk" \
++        | sed -n 's/\s*DRIVERS=="\(\S\+\)"/\1/p' \
++        | get_module_name)
+ 
+     # also return modalias info from sysfs paths parsed by udevadm
+     dev_paths=$(echo "$dev_attr_walk" | sed -n 's/.*\(\/devices\/.*\)'\'':/\1/p')
+@@ -1001,6 +1018,7 @@ get_dev_module() {
+                 [[ -n $dev_drivers && ${dev_drivers: -1} != $'\n' ]] && dev_drivers+=$'\n'
+                 dev_drivers+=$(udevadm info -a "$dev_vpath/$dev_link" \
+                     | sed -n 's/\s*DRIVERS=="\(\S\+\)"/\1/p' \
++                    | get_module_name \
+                     | grep -v -e pcieport)
+             done
+         fi
+
