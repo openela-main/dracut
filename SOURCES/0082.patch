@@ -1,0 +1,28 @@
+From 31a612d5a1cc8c2f0fcc7db82a6f8c9106c8bb63 Mon Sep 17 00:00:00 2001
+From: Pavel Valena <pvalena@redhat.com>
+Date: Mon, 17 Feb 2025 09:15:11 +0100
+Subject: [PATCH] ci: bump actions/upload-artifact version to v4
+
+as v3 is deprecated.
+
+https://github.blog/changelog/2024-04-16-deprecation-notice-v3-of-the-artifact-actions/
+
+rhel-only
+---
+ .github/workflows/gather-metadata.yml | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/.github/workflows/gather-metadata.yml b/.github/workflows/gather-metadata.yml
+index e4cbc486..d11c90d1 100644
+--- a/.github/workflows/gather-metadata.yml
++++ b/.github/workflows/gather-metadata.yml
+@@ -22,7 +22,7 @@ jobs:
+         uses: redhat-plumbers-in-action/gather-pull-request-metadata@v1
+ 
+       - name: Upload artifact with gathered metadata
+-        uses: actions/upload-artifact@v3
++        uses: actions/upload-artifact@v4
+         with:
+           name: pr-metadata
+           path: ${{ steps.Metadata.outputs.metadata-file }}
+

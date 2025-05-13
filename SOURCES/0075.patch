@@ -1,0 +1,28 @@
+From cb1c0c94322768dcdc8748b3623c0a4ba1afde71 Mon Sep 17 00:00:00 2001
+From: Jo Zzsi <jozzsicsataban@gmail.com>
+Date: Wed, 11 Sep 2024 16:57:13 -0400
+Subject: [PATCH] fix: typo in variable name
+
+(cherry picked from commit 76b2f1a9b52afd4203c1d0e6afb57314bbfe8407)
+
+Resolves: RHEL-66582
+---
+ dracut.sh | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/dracut.sh b/dracut.sh
+index 7e4b0602..f748a073 100755
+--- a/dracut.sh
++++ b/dracut.sh
+@@ -946,8 +946,8 @@ if [[ -n $add_confdir ]]; then
+     # Check if it exists under $confdir.
+     elif [[ -d $confdir/$add_confdir ]]; then
+         add_confdir="$confdir/$add_confdir"
+-    elif [[ -d $dracutbasdir/dracut.conf.d/$add_confdir ]]; then
+-        add_confdir="$dracutbasdir/dracut.conf.d/$add_confdir"
++    elif [[ -d $dracutbasedir/dracut.conf.d/$add_confdir ]]; then
++        add_confdir="$dracutbasedir/dracut.conf.d/$add_confdir"
+     else
+         printf "%s\n" "dracut[F]: Configuration directory '$add_confdir' not found." >&2
+         exit 1
+

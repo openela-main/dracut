@@ -1,0 +1,51 @@
+From acbb003a63809ed870598eee7171a5c188e80113 Mon Sep 17 00:00:00 2001
+From: Laszlo Gombos <laszlo.gombos@gmail.com>
+Date: Wed, 24 Aug 2022 19:16:26 +0000
+Subject: [PATCH] fix(dracut.sh): make omit-drivers option do exact match for
+ names
+
+Modify the basic test case to use --omit-drivers and make it fail
+without the PR and make it pass with the PR.
+
+The test would fail with the following error without the PR:
+FATAL: iscsiroot requested but kernel/initrd does not support iscsi
+
+(cherry picked from commit a7f5cdbccbbd4d8c406ea7c4b3e6f25cd747e648)
+
+Resolves: RHEL-57094
+---
+ dracut.sh                  | 2 +-
+ test/TEST-01-BASIC/test.sh | 3 +++
+ 2 files changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/dracut.sh b/dracut.sh
+index f748a073..dcdeaf5f 100755
+--- a/dracut.sh
++++ b/dracut.sh
+@@ -1379,7 +1379,7 @@ omit_drivers_corrected=""
+ for d in $omit_drivers; do
+     [[ " $drivers $add_drivers " == *\ $d\ * ]] && continue
+     [[ " $drivers $force_drivers " == *\ $d\ * ]] && continue
+-    omit_drivers_corrected+="$d|"
++    omit_drivers_corrected+="^$d$|"
+ done
+ omit_drivers="${omit_drivers_corrected%|}"
+ unset omit_drivers_corrected
+diff --git a/test/TEST-01-BASIC/test.sh b/test/TEST-01-BASIC/test.sh
+index 9f98af2c..877f6534 100755
+--- a/test/TEST-01-BASIC/test.sh
++++ b/test/TEST-01-BASIC/test.sh
+@@ -110,9 +110,12 @@ test_setup() {
+         inst_hook shutdown-emergency 000 ./hard-off.sh
+         inst_hook emergency 000 ./hard-off.sh
+     )
++
++    # make sure --omit-drivers does not filter out drivers using regexp to test for an earlier regression (assuming there is no one letter linux kernel module needed to run the test)
+     "$basedir"/dracut.sh -l -i "$TESTDIR"/overlay / \
+         -a "debug watchdog" \
+         -d "piix ide-gd_mod ata_piix ext3 sd_mod i6300esb ib700wdt" \
++        --omit-drivers 'a b c d e f g h i j k l m n o p q r s t u v w x y z' \
+         --no-hostonly-cmdline -N \
+         -f "$TESTDIR"/initramfs.testing "$KVERSION" || return 1
+ }
+

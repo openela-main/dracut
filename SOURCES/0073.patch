@@ -1,0 +1,100 @@
+From e3bba58810038d0e7bc83988355e07eb30c1f5a7 Mon Sep 17 00:00:00 2001
+From: Huaxin Lu <luhuaxin1@huawei.com>
+Date: Thu, 20 Jun 2024 13:38:26 +0800
+Subject: [PATCH] fix(dracut-install): copy xattr when use clone ioctl
+
+When use clone ioctl to copy a file, the extended attributes of files are
+missing, which is inconsistent with the result by using the cp command.
+This commit add the process to copy extended attributes after clone_file().
+
+Signed-off-by: Huaxin Lu <luhuaxin1@huawei.com>
+
+(cherry picked from commit 1cf0db26e43fe4c6173acdb8047f16666ebf070a)
+
+Resolves: RHEL-55245
+---
+ src/install/dracut-install.c | 56 ++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 56 insertions(+)
+
+diff --git a/src/install/dracut-install.c b/src/install/dracut-install.c
+index 997d62d3..2ad783d3 100644
+--- a/src/install/dracut-install.c
++++ b/src/install/dracut-install.c
+@@ -43,6 +43,7 @@
+ #include <fts.h>
+ #include <regex.h>
+ #include <sys/utsname.h>
++#include <sys/xattr.h>
+ 
+ #include "log.h"
+ #include "hashmap.h"
+@@ -267,6 +268,56 @@ static inline int clone_file(int dest_fd, int src_fd)
+         return ioctl(dest_fd, BTRFS_IOC_CLONE, src_fd);
+ }
+ 
++static int copy_xattr(int dest_fd, int src_fd)
++{
++        int ret = 0;
++        ssize_t name_len = 0, value_len = 0;
++        char *name_buf = NULL, *name = NULL, *value = NULL, *value_save = NULL;
++
++        name_len = flistxattr(src_fd, NULL, 0);
++        if (name_len < 0)
++                return -1;
++
++        name_buf = calloc(1, name_len + 1);
++        if (name_buf == NULL)
++                return -1;
++
++        name_len = flistxattr(src_fd, name_buf, name_len);
++        if (name_len < 0)
++                goto out;
++
++        for (name = name_buf; name != name_buf + name_len; name = strchr(name, '\0') + 1) {
++                value_len = fgetxattr(src_fd, name, NULL, 0);
++                if (value_len < 0) {
++                        ret = -1;
++                        continue;
++                }
++
++                value_save = value;
++                value = realloc(value, value_len);
++                if (value == NULL) {
++                        value = value_save;
++                        ret = -1;
++                        goto out;
++                }
++
++                value_len = fgetxattr(src_fd, name, value, value_len);
++                if (value_len < 0) {
++                        ret = -1;
++                        continue;
++                }
++
++                value_len = fsetxattr(dest_fd, name, value, value_len, 0);
++                if (value_len < 0)
++                        ret = -1;
++        }
++
++out:
++        free(name_buf);
++        free(value);
++        return ret;
++}
++
+ static bool use_clone = true;
+ 
+ static int cp(const char *src, const char *dst)
+@@ -308,6 +359,11 @@ static int cp(const char *src, const char *dst)
+                                                 log_info("Failed to chown %s: %m", dst);
+                                 }
+ 
++                        if (geteuid() == 0 && no_xattr == false) {
++                                if (copy_xattr(dest_desc, source_desc) != 0)
++                                        log_error("Failed to copy xattr %s: %m", dst);
++                        }
++
+                         tv[0].tv_sec = sb.st_atime;
+                         tv[0].tv_usec = 0;
+                         tv[1].tv_sec = sb.st_mtime;
+

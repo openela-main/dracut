@@ -5,7 +5,7 @@
 # strip the automatically generated dep here and instead co-own the
 # directory.
 %global __requires_exclude pkg-config
-%define dist_free_release 80.git20250411
+%define dist_free_release 87.git20250311
 
 Name: dracut
 Version: 057
@@ -98,12 +98,23 @@ Patch66: 0066.patch
 Patch67: 0067.patch
 Patch68: 0068.patch
 Patch69: 0069.patch
+Patch70: 0070.patch
 Patch71: 0071.patch
 Patch72: 0072.patch
+Patch73: 0073.patch
+Patch74: 0074.patch
+Patch75: 0075.patch
 Patch76: 0076.patch
 Patch77: 0077.patch
 Patch78: 0078.patch
 Patch79: 0079.patch
+Patch80: 0080.patch
+Patch81: 0081.patch
+Patch82: 0082.patch
+Patch83: 0083.patch
+Patch84: 0084.patch
+Patch85: 0085.patch
+Patch86: 0086.patch
 
 Source1: https://www.gnu.org/licenses/lgpl-2.1.txt
 
@@ -115,6 +126,7 @@ BuildRequires: gcc
 %if 0%{?fedora} || 0%{?rhel}
 BuildRequires: pkgconfig
 BuildRequires: systemd
+BuildRequires: openssl-devel
 %endif
 %if 0%{?fedora}
 BuildRequires: bash-completion
@@ -353,6 +365,8 @@ echo 'dracut_rescue_image="yes"' > $RPM_BUILD_ROOT%{dracutlibdir}/dracut.conf.d/
 %{dracutlibdir}/dracut-initramfs-restore
 %{dracutlibdir}/dracut-install
 %{dracutlibdir}/dracut-util
+%{dracutlibdir}/ossl-config
+%{dracutlibdir}/ossl-files
 %{dracutlibdir}/skipcpio
 %config(noreplace) %{_sysconfdir}/dracut.conf
 %if 0%{?fedora} || 0%{?suse_version} || 0%{?rhel}
@@ -478,6 +492,7 @@ echo 'dracut_rescue_image="yes"' > $RPM_BUILD_ROOT%{dracutlibdir}/dracut.conf.d/
 %{dracutlibdir}/modules.d/99base
 %{dracutlibdir}/modules.d/99memstrack
 %{dracutlibdir}/modules.d/99fs-lib
+%{dracutlibdir}/modules.d/99openssl
 %{dracutlibdir}/modules.d/99shutdown
 %attr(0644,root,root) %ghost %config(missingok,noreplace) %{_localstatedir}/log/dracut.log
 %dir %{_sharedstatedir}/initramfs
@@ -556,12 +571,24 @@ echo 'dracut_rescue_image="yes"' > $RPM_BUILD_ROOT%{dracutlibdir}/dracut.conf.d/
 %{_prefix}/lib/kernel/install.d/51-dracut-rescue.install
 
 %changelog
-* Fri Apr 11 2025 Pavel Valena <pvalena@redhat.com> - 057-80.git20250411
-- fix(kernel-modules): use modalias info in get_dev_module()
-- fix(dracut-functions.sh): convert mmcblk to the real kernel
+* Tue Mar 11 2025 Pavel Valena <pvalena@redhat.com> - 057-87.git20250311
+- fix(rescue): create hmac file for rescue kernel
+
+* Mon Feb 17 2025 Pavel Valena <pvalena@redhat.com> - 057-86.git20250217
+- fix(35network-manager): remove duplicate installkernel
+- feat(fips): include fips module unconditionally
+- fix(dracut.sh): make omit-drivers option do exact match for
+- feat: add openssl module
+
+* Wed Nov 27 2024 Pavel Valena <pvalena@redhat.com> - 057-79.git20241127
 - fix(35network-manager): install nftables kernel modules
 - fix(35network-manager): install nft binary during module
+- fix(dracut-install): copy xattr when use clone ioctl
 - feat(dracut.sh): add --add-confdir option
+- fix: typo in variable name
+- feat(fips): add support for UKIs
+- fix(kernel-modules): use modalias info in get_dev_module()
+- fix(dracut-functions.sh): convert mmcblk to the real kernel
 
 * Mon Aug 19 2024 Pavel Valena <pvalena@redhat.com> - 057-70.git20240819
 - fix(systemd): set right permissions for the machine-id file

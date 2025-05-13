@@ -1,0 +1,250 @@
+From 29616c6a89437e138bb5abc55b42325d0d2b1394 Mon Sep 17 00:00:00 2001
+From: Pavel Valena <pvalena@redhat.com>
+Date: Tue, 22 Oct 2024 17:30:32 +0200
+Subject: [PATCH] ci: fix CentOS-9-Stream container and ci config
+
+ - correct URL for dash
+ - add missing dependencies
+ - use centos9 instead of fedora
+
+rhel-only
+
+Resolves: RHEL-65249
+---
+ .github/workflows/integration.yml         |  4 +-
+ test/container/Dockerfile-Arch            | 25 -------------
+ test/container/Dockerfile-CentOS-9-Stream |  5 ++-
+ test/container/Dockerfile-Debian          | 61 -------------------------------
+ test/container/Dockerfile-Fedora-latest   | 56 ----------------------------
+ test/container/Dockerfile-OpenSuse-latest | 23 ------------
+ 6 files changed, 5 insertions(+), 169 deletions(-)
+
+diff --git a/.github/workflows/integration.yml b/.github/workflows/integration.yml
+index c22bf916..c023ab16 100644
+--- a/.github/workflows/integration.yml
++++ b/.github/workflows/integration.yml
+@@ -14,7 +14,7 @@ jobs:
+         strategy:
+             matrix:
+                 container: [
+-                        "fedora:latest",
++                        "centos:stream9",
+                 ]
+                 test: [
+                         "04",
+@@ -40,7 +40,7 @@ jobs:
+         strategy:
+             matrix:
+                 container: [
+-                        "fedora:latest",
++                        "centos:stream9",
+                 ]
+                 test: [
+                         "01",
+diff --git a/test/container/Dockerfile-Arch b/test/container/Dockerfile-Arch
+deleted file mode 100644
+index 4112cc5b..00000000
+--- a/test/container/Dockerfile-Arch
++++ /dev/null
+@@ -1,25 +0,0 @@
+-FROM docker.io/archlinux
+-
+-MAINTAINER https://github.com/dracutdevs/dracut
+-
+-ENV container docker
+-LABEL RUN="docker run -it --name NAME --privileged --ipc=host --net=host --pid=host -e NAME=NAME -e IMAGE=IMAGE IMAGE"
+-
+-RUN echo 'export DRACUT_NO_XATTR=1 KVERSION=$(cd /lib/modules; ls -1 | tail -1)' > /etc/profile.d/dracut-test.sh
+-
+-# Install needed packages for the dracut CI container
+-RUN pacman --noconfirm -Sy \
+-    linux dash strace dhclient asciidoc cpio pigz squashfs-tools \
+-    qemu btrfs-progs mdadm dmraid nfs-utils nfsidmap lvm2 nbd \
+-    dhcp networkmanager multipath-tools vi tcpdump open-iscsi \
+-    git shfmt shellcheck astyle which base-devel glibc parted && yes | pacman -Scc
+-
+-RUN useradd -m build
+-RUN su build -c 'cd && git clone https://aur.archlinux.org/perl-config-general.git && cd perl-config-general && makepkg -s --noconfirm'
+-RUN pacman -U --noconfirm ~build/perl-config-general/*.pkg.tar.*
+-RUN su build -c 'cd && git clone https://aur.archlinux.org/tgt.git && cd tgt && echo "CFLAGS=-Wno-error=stringop-truncation" >> PKGBUILD && makepkg -s --noconfirm'
+-RUN pacman -U --noconfirm ~build/tgt/*.pkg.tar.*
+-RUN rm -fr ~build
+-
+-# Set default command
+-CMD ["/usr/bin/bash"]
+diff --git a/test/container/Dockerfile-CentOS-9-Stream b/test/container/Dockerfile-CentOS-9-Stream
+index abcc067e..26d308d2 100644
+--- a/test/container/Dockerfile-CentOS-9-Stream
++++ b/test/container/Dockerfile-CentOS-9-Stream
+@@ -8,9 +8,10 @@ LABEL RUN="docker run -it --name NAME --privileged --ipc=host --net=host --pid=h
+ RUN echo 'export DRACUT_NO_XATTR=1 KVERSION=$(cd /lib/modules; ls -1 | tail -1)' > /etc/profile.d/dracut-test.sh
+ 
+ # Install needed packages for the dracut CI container
+-# FIXME: properly re-add dash once C9S EPEL is available
++# FIXME: add dmraid, scsi-target-utils (e.g. from COPR)
+ RUN dnf -y install --enablerepo crb --setopt=install_weak_deps=False \
+-    http://mirrors.kernel.org/fedora/releases/34/Everything/x86_64/os/Packages/d/dash-0.5.10.2-8.fc34.x86_64.rpm \
++    https://dl.fedoraproject.org/pub/epel/9/Everything/x86_64/Packages/d/dash-0.5.11.5-4.el9.x86_64.rpm \
++    https://dl.fedoraproject.org/pub/epel/9/Everything/x86_64/Packages/b/btrfs-progs-6.10-1.el9.x86_64.rpm \
+     qemu-kvm \
+     NetworkManager \
+     asciidoc \
+diff --git a/test/container/Dockerfile-Debian b/test/container/Dockerfile-Debian
+deleted file mode 100644
+index 15eb9958..00000000
+--- a/test/container/Dockerfile-Debian
++++ /dev/null
+@@ -1,61 +0,0 @@
+-FROM docker.io/debian:latest
+-
+-MAINTAINER https://github.com/dracutdevs/dracut
+-
+-ENV container docker
+-LABEL RUN="docker run -it --name NAME --privileged --ipc=host --net=host --pid=host -e NAME=NAME -e IMAGE=IMAGE IMAGE"
+-
+-RUN echo 'export DRACUT_NO_XATTR=1 KVERSION=$(cd /lib/modules; ls -1 | tail -1)' > /etc/profile.d/dracut-test.sh
+-
+-# Install needed packages for the dracut CI container
+-RUN apt-get update -y -qq && apt-get upgrade -y -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends -o Dpkg::Use-Pty=0 \
+-    asciidoc \
+-    astyle \
+-    btrfs-progs \
+-    busybox-static \
+-    bzip2 \
+-    ca-certificates \
+-    console-setup \
+-    cpio \
+-    cryptsetup \
+-    curl \
+-    dash \
+-    debhelper \
+-    debhelper-compat \
+-    docbook \
+-    docbook-xml \
+-    docbook-xsl \
+-    fdisk \
+-    g++ \
+-    git \
+-    iputils-ping \
+-    isc-dhcp-client \
+-    kmod \
+-    less \
+-    libkmod-dev \
+-    linux-image-generic \
+-    lvm2 \
+-    make \
+-    mdadm \
+-    multipath-tools \
+-    nbd-client \
+-    network-manager \
+-    nfs-common \
+-    open-iscsi \
+-    parted \
+-    pigz \
+-    pkg-config \
+-    procps \
+-    qemu-system-x86 \
+-    quilt \
+-    shellcheck \
+-    squashfs-tools \
+-    strace \
+-    sudo \
+-    tcpdump \
+-    vim \
+-    wget \
+-    && apt-get clean
+-
+-# Set default command
+-CMD ["/usr/bin/bash"]
+diff --git a/test/container/Dockerfile-Fedora-latest b/test/container/Dockerfile-Fedora-latest
+deleted file mode 100644
+index a38a72ef..00000000
+--- a/test/container/Dockerfile-Fedora-latest
++++ /dev/null
+@@ -1,56 +0,0 @@
+-FROM registry.fedoraproject.org/fedora:latest
+-
+-MAINTAINER https://github.com/dracutdevs/dracut
+-
+-ENV container docker
+-LABEL RUN="docker run -it --name NAME --privileged --ipc=host --net=host --pid=host -e NAME=NAME -e IMAGE=IMAGE IMAGE"
+-
+-RUN echo 'export DRACUT_NO_XATTR=1 KVERSION=$(cd /lib/modules; ls -1 | tail -1)' > /etc/profile.d/dracut-test.sh
+-
+-# Install needed packages for the dracut CI container
+-RUN dnf -y install --setopt=install_weak_deps=False \
+-    dash \
+-    pigz \
+-    asciidoc \
+-    mdadm \
+-    lvm2 \
+-    dmraid \
+-    cryptsetup \
+-    nfs-utils \
+-    nbd \
+-    dhcp-server \
+-    scsi-target-utils \
+-    iscsi-initiator-utils \
+-    strace \
+-    btrfs-progs \
+-    kmod-devel \
+-    gcc \
+-    bzip2 \
+-    xz \
+-    tar \
+-    wget \
+-    rpm-build \
+-    make \
+-    git \
+-    bash-completion \
+-    sudo \
+-    kernel \
+-    dhcp-client \
+-    /usr/bin/qemu-kvm \
+-    /usr/bin/qemu-system-$(uname -i) \
+-    e2fsprogs \
+-    tcpdump \
+-    iproute \
+-    iputils \
+-    dbus-daemon \
+-    kbd \
+-    NetworkManager \
+-    squashfs-tools \
+-    which \
+-    ShellCheck \
+-    shfmt \
+-    parted \
+-    && dnf -y update && dnf clean all
+-
+-# Set default command
+-CMD ["/usr/bin/bash"]
+diff --git a/test/container/Dockerfile-OpenSuse-latest b/test/container/Dockerfile-OpenSuse-latest
+deleted file mode 100644
+index 9aaf07b1..00000000
+--- a/test/container/Dockerfile-OpenSuse-latest
++++ /dev/null
+@@ -1,23 +0,0 @@
+-FROM registry.opensuse.org/opensuse/tumbleweed-dnf:latest
+-
+-MAINTAINER https://github.com/dracutdevs/dracut
+-
+-ENV container docker
+-LABEL RUN="docker run -it --name NAME --privileged --ipc=host --net=host --pid=host -e NAME=NAME -e IMAGE=IMAGE IMAGE"
+-
+-RUN echo 'export DRACUT_NO_XATTR=1 KVERSION=$(cd /lib/modules; ls -1 | tail -1)' > /etc/profile.d/dracut-test.sh
+-
+-# Install needed packages for the dracut CI container
+-RUN dnf -y install --setopt=install_weak_deps=False \
+-    dash asciidoc mdadm lvm2 dmraid cryptsetup nfs-utils nbd dhcp-server \
+-    strace libkmod-devel gcc bzip2 xz tar wget rpm-build make git bash-completion \
+-    sudo kernel dhcp-client qemu-kvm /usr/bin/qemu-system-$(uname -m) e2fsprogs \
+-    tcpdump iproute iputils kbd NetworkManager btrfsprogs tgt dbus-broker \
+-    iscsiuio open-iscsi which ShellCheck procps pigz parted squashfs \
+-    && dnf -y update && dnf clean all
+-
+-RUN shfmt_version=3.2.4; wget "https://github.com/mvdan/sh/releases/download/v${shfmt_version}/shfmt_v${shfmt_version}_linux_amd64" -O /usr/local/bin/shfmt \
+-    && chmod +x /usr/local/bin/shfmt
+-
+-# Set default command
+-CMD ["/usr/bin/bash"]
+

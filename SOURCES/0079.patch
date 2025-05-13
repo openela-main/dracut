@@ -1,27 +1,34 @@
-From 7a6b1ee67d25cd9c3c071387b8adf1d3dd6e3fcd Mon Sep 17 00:00:00 2001
-From: Jo Zzsi <jozzsicsataban@gmail.com>
-Date: Wed, 11 Sep 2024 16:57:13 -0400
-Subject: [PATCH] fix: typo in variable name
+From a5b07e49259b201374124ba1e23b931da6e741e0 Mon Sep 17 00:00:00 2001
+From: packit-public-repos-bot
+ <125959684+packit-public-repos-bot@users.noreply.github.com>
+Date: Wed, 11 Dec 2024 11:47:15 +0100
+Subject: [PATCH] Fix configuration for Packit 1.0.0
 
-(cherry picked from commit 76b2f1a9b52afd4203c1d0e6afb57314bbfe8407)
+This commit fixes the configuration for the forthcoming Packit 1.0.0.
+See [our blog post](https://packit.dev/posts/packit_1_0_0_action_required) for more details.
+  - Job type `build` has been changed to `copr_build`.
+  - Job type `production_build` has been changed to `upstream_koji_build`.
+  - Key `upstream_project_name` has been changed to `upstream_package_name`.
+  - Key `synced_files` has been changed to `files_to_sync`.
 
-Resolves: RHEL-74399
+Please review and merge me before January 2025 otherwise packit-service jobs will fail because of an invalid configuration.
+
+Resolves: RHEL-65249
 ---
- dracut.sh | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ .packit.yml | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/dracut.sh b/dracut.sh
-index 7e4b0602..f748a073 100755
---- a/dracut.sh
-+++ b/dracut.sh
-@@ -946,8 +946,8 @@ if [[ -n $add_confdir ]]; then
-     # Check if it exists under $confdir.
-     elif [[ -d $confdir/$add_confdir ]]; then
-         add_confdir="$confdir/$add_confdir"
--    elif [[ -d $dracutbasdir/dracut.conf.d/$add_confdir ]]; then
--        add_confdir="$dracutbasdir/dracut.conf.d/$add_confdir"
-+    elif [[ -d $dracutbasedir/dracut.conf.d/$add_confdir ]]; then
-+        add_confdir="$dracutbasedir/dracut.conf.d/$add_confdir"
-     else
-         printf "%s\n" "dracut[F]: Configuration directory '$add_confdir' not found." >&2
-         exit 1
+diff --git a/.packit.yml b/.packit.yml
+index 86ba83d2..1439a44e 100644
+--- a/.packit.yml
++++ b/.packit.yml
+@@ -7,7 +7,7 @@
+ # Docs: https://packit.dev/docs/
+ 
+ specfile_path: pkgbuild/dracut.spec
+-synced_files:
++files_to_sync:
+   - .packit.yaml
+ upstream_package_name: dracut
+ downstream_package_name: dracut
+
