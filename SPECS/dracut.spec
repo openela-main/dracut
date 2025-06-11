@@ -5,7 +5,7 @@
 # strip the automatically generated dep here and instead co-own the
 # directory.
 %global __requires_exclude pkg-config
-%define dist_free_release 87.git20250311
+%define dist_free_release 88.git20250311
 
 Name: dracut
 Version: 057
@@ -115,6 +115,7 @@ Patch83: 0083.patch
 Patch84: 0084.patch
 Patch85: 0085.patch
 Patch86: 0086.patch
+Patch89: 0089.patch
 
 Source1: https://www.gnu.org/licenses/lgpl-2.1.txt
 
@@ -571,6 +572,9 @@ echo 'dracut_rescue_image="yes"' > $RPM_BUILD_ROOT%{dracutlibdir}/dracut.conf.d/
 %{_prefix}/lib/kernel/install.d/51-dracut-rescue.install
 
 %changelog
+* Mon Jun 09 2025 Pavel Valena <pvalena@redhat.com> - 057-88.git20250311
+- fix(dracut.sh): don't pass empty string as dir
+
 * Tue Mar 11 2025 Pavel Valena <pvalena@redhat.com> - 057-87.git20250311
 - fix(rescue): create hmac file for rescue kernel
 
