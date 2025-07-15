@@ -5,7 +5,7 @@
 # strip the automatically generated dep here and instead co-own the
 # directory.
 %global __requires_exclude pkg-config
-%define dist_free_release 233.git20240115
+%define dist_free_release 237.git20250603
 
 Name: dracut
 Version: 049
@@ -260,6 +260,10 @@ Patch229: 0229.patch
 Patch230: 0230.patch
 Patch231: 0231.patch
 Patch232: 0232.patch
+Patch233: 0233.patch
+Patch234: 0234.patch
+Patch235: 0235.patch
+Patch236: 0236.patch
 
 Source1: https://www.gnu.org/licenses/lgpl-2.1.txt
 
@@ -679,6 +683,7 @@ echo 'dracut_rescue_image="yes"' > $RPM_BUILD_ROOT%{dracutlibdir}/dracut.conf.d/
 %{dracutlibdir}/modules.d/95znet
 %endif
 %{dracutlibdir}/modules.d/99uefi-lib
+%attr(0644,root,root) %ghost %{_sysconfdir}/dracut.conf.d/50-network-legacy.conf
 
 %files caps
 %{dracutlibdir}/modules.d/02caps
@@ -715,6 +720,13 @@ echo '# Since rhel-8.3 dracut moved to use NetworkManager
 add_dracutmodules+=" network-legacy "' > /etc/dracut.conf.d/50-network-legacy.conf
 
 %changelog
+* Wed Jun 04 2025 Pavel Valena <pvalena@redhat.com> - 049-237.git20250603
+- fix(rescue): create hmac file for rescue kernel
+- fix(spec): drop %config from 50-network-legacy.conf
+
+* Tue Apr 15 2025 Pavel Valena <pvalena@redhat.com> - 049-234.git20240115
+- spec: own 50-network-legacy.conf
+
 * Mon Jan 15 2024 Pavel Valena <pvalena@redhat.com> - 049-233.git20240115
 - fix(dracut.sh): remove microcode check based on
 - fix(qeth_rules): check the existence of

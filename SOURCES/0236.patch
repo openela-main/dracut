@@ -1,0 +1,24 @@
+From c81062cf34a1a652d68b45fc876d93a4ed5c9ada Mon Sep 17 00:00:00 2001
+From: Pavel Valena <pvalena@redhat.com>
+Date: Sun, 28 Jan 2024 18:06:15 +0100
+Subject: [PATCH] fix(spec): own 50-network-legacy.conf
+
+Without %config, to have the file removed with the package as well.
+
+Resolves: RHEL-5673
+---
+ dracut.spec | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/dracut.spec b/dracut.spec
+index a417f780..5215985a 100644
+--- a/dracut.spec
++++ b/dracut.spec
+@@ -446,6 +446,7 @@ echo 'dracut_rescue_image="yes"' > $RPM_BUILD_ROOT%{dracutlibdir}/dracut.conf.d/
+ %{dracutlibdir}/modules.d/95znet
+ %endif
+ %{dracutlibdir}/modules.d/99uefi-lib
++%attr(0644,root,root) %ghost %{_sysconfdir}/dracut.conf.d/50-network-legacy.conf
+ 
+ %files caps
+ %{dracutlibdir}/modules.d/02caps

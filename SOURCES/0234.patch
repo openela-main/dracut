@@ -1,0 +1,26 @@
+From b61af7e8c89d2b9625fd7e6285168231c0cf2d03 Mon Sep 17 00:00:00 2001
+From: Pavel Valena <pvalena@redhat.com>
+Date: Mon, 19 Aug 2024 09:41:27 +0200
+Subject: [PATCH] feat(fips): include fips module unconditionally
+
+rhel-only
+
+Resolves: RHEL-53355
+---
+ modules.d/01fips/module-setup.sh | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/modules.d/01fips/module-setup.sh b/modules.d/01fips/module-setup.sh
+index 71bea53a..66eac19f 100755
+--- a/modules.d/01fips/module-setup.sh
++++ b/modules.d/01fips/module-setup.sh
+@@ -2,7 +2,7 @@
+ 
+ # called by dracut
+ check() {
+-    return 255
++    return 0
+ }
+ 
+ # called by dracut
+

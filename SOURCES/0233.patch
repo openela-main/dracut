@@ -1,0 +1,23 @@
+From 3fff129472d353a189a8f0c7bc768534e4c09d16 Mon Sep 17 00:00:00 2001
+From: Pavel Valena <pvalena@redhat.com>
+Date: Wed, 7 May 2025 17:54:41 +0200
+Subject: [PATCH] ci: fix differential shellcheck
+
+---
+ .github/workflows/differential-shellcheck.yml | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/.github/workflows/differential-shellcheck.yml b/.github/workflows/differential-shellcheck.yml
+index 55273b3d..098bd8f7 100644
+--- a/.github/workflows/differential-shellcheck.yml
++++ b/.github/workflows/differential-shellcheck.yml
+@@ -5,7 +5,7 @@ on:
+ 
+ jobs:
+   test:
+-    runs-on: ubuntu-20.04
++    runs-on: ubuntu-latest
+ 
+     steps: 
+       - name: Repository checkout
+
