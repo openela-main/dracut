@@ -1,0 +1,46 @@
+From b0c8aaecda1d62aa925d70fcadc071e9c85c2621 Mon Sep 17 00:00:00 2001
+From: Antonio Alvarez Feijoo <antonio.feijoo@suse.com>
+Date: Mon, 3 Mar 2025 15:23:41 +0100
+Subject: [PATCH] refactor(multipath): remove custom multipathd.service
+
+Install `multipathd.service` provided by upstream, and add a dropin to support
+`rd.multipath=0`.
+
+(cherry picked from commit bb343fa83de4c73890e9054329249a1491733a5c)
+
+Resolves: RHEL-109565
+---
+ modules.d/90multipath/module-setup.sh        | 3 ++-
+ modules.d/90multipath/multipathd-dracut.conf | 2 ++
+ 2 files changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/modules.d/90multipath/module-setup.sh b/modules.d/90multipath/module-setup.sh
+index 541e243a..2f4ac869 100755
+--- a/modules.d/90multipath/module-setup.sh
++++ b/modules.d/90multipath/module-setup.sh
+@@ -90,6 +90,7 @@ install() {
+     [[ -d $config_dir ]] || config_dir=/etc/multipath/conf.d
+ 
+     inst_multiple \
++        "$systemdsystemunitdir"/multipathd.service \
+         pkill \
+         pidof \
+         kpartx \
+@@ -137,7 +138,7 @@ install() {
+             inst_simple "${moddir}/multipathd-configure.service" "${systemdsystemunitdir}/multipathd-configure.service"
+             $SYSTEMCTL -q --root "$initdir" enable multipathd-configure.service
+         fi
+-        inst_simple "${moddir}/multipathd.service" "${systemdsystemunitdir}/multipathd.service"
++        inst_simple "$moddir/multipathd-dracut.conf" "$systemdsystemunitdir/multipathd.service.d/multipathd-dracut.conf"
+         $SYSTEMCTL -q --root "$initdir" enable multipathd.service
+     else
+         inst_hook pre-trigger 02 "$moddir/multipathd.sh"
+diff --git a/modules.d/90multipath/multipathd-dracut.conf b/modules.d/90multipath/multipathd-dracut.conf
+new file mode 100644
+index 00000000..783b05d5
+--- /dev/null
++++ b/modules.d/90multipath/multipathd-dracut.conf
+@@ -0,0 +1,2 @@
++[Unit]
++ConditionKernelCommandLine=!rd.multipath=0
+
