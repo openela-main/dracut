@@ -1,0 +1,37 @@
+From 90d1ed6f5acf7ba916197db1c08bb2d0de4715bc Mon Sep 17 00:00:00 2001
+From: Jo Zzsi <jozzsicsataban@gmail.com>
+Date: Sun, 25 May 2025 16:16:40 -0400
+Subject: [PATCH] fix(systemd): systemd.volatile needs overlayfs kernel module
+
+See https://www.freedesktop.org/software/systemd/man/latest/systemd-volatile-root.service.html
+
+> This service is only enabled if full volatile mode is selected,
+> for example by specifying "systemd.volatile=yes" on the kernel command line.
+> This service runs only in the initrd, before the system transitions to the host's root directory.
+> Note that this service is not used if "systemd.volatile=state" is used, as in that mode the root
+> directory is non-volatile.
+
+Support for this systemd feature has been added in systemd v242 .
+https://github.com/systemd/systemd/pull/11243
+
+(cherry picked from commit 33f2e49d600294fb54620f029e10fd74de54bfa8)
+
+Resolves: RHEL-94663
+---
+ modules.d/00systemd/module-setup.sh | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/modules.d/00systemd/module-setup.sh b/modules.d/00systemd/module-setup.sh
+index 2d6fc9ff..658640ac 100755
+--- a/modules.d/00systemd/module-setup.sh
++++ b/modules.d/00systemd/module-setup.sh
+@@ -18,7 +18,7 @@ depends() {
+ 
+ installkernel() {
+     hostonly='' instmods autofs4 ipv6 algif_hash hmac sha256 sg
+-    instmods -s efivarfs
++    instmods -s efivarfs overlay
+ }
+ 
+ # called by dracut
+

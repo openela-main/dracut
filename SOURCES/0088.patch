@@ -1,0 +1,23 @@
+From 5dcc483cbe28534671aa12f4f651d85267911a72 Mon Sep 17 00:00:00 2001
+From: Pavel Valena <pvalena@redhat.com>
+Date: Mon, 9 Jun 2025 22:52:21 +0200
+Subject: [PATCH] ci: switch differential-shellcheck to ubuntu-latest
+
+---
+ .github/workflows/differential-shellcheck.yml | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/.github/workflows/differential-shellcheck.yml b/.github/workflows/differential-shellcheck.yml
+index 63a022bf..20e10c17 100644
+--- a/.github/workflows/differential-shellcheck.yml
++++ b/.github/workflows/differential-shellcheck.yml
+@@ -5,7 +5,7 @@ on:
+ 
+ jobs:
+   test:
+-    runs-on: ubuntu-20.04
++    runs-on: ubuntu-latest
+ 
+     steps: 
+       - name: Repository checkout
+

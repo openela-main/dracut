@@ -1,0 +1,43 @@
+From 61c98d1ce74f96e1089ada51b161632c0ca1e079 Mon Sep 17 00:00:00 2001
+From: Tomas Bzatek <tbzatek@redhat.com>
+Date: Tue, 3 Jun 2025 18:34:39 +0200
+Subject: [PATCH] improvement(74nvmf): lookup required NIC kernel modules for
+ NBFT interfaces
+
+When dracut is called with '--hostonly-mode strict' and perhaps even
+with --hostonly-nics '' as done by kdump/mkdumprd, all the kernel
+modules related to hostonly networking are stripped down. In such
+a case it is viable to lookup and install the required kernel modules
+ourselves, based on any currently present nbft interfaces.
+
+Note: the lookup depends on the current 'nbftX' network interface
+naming.
+
+Signed-off-by: Tomas Bzatek <tbzatek@redhat.com>
+(cherry picked from commit e949a76aaa8f1a1e4cb01d4cacf89c69c7bbd801)
+
+Resolves: RHEL-104222
+---
+ modules.d/95nvmf/module-setup.sh | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/modules.d/95nvmf/module-setup.sh b/modules.d/95nvmf/module-setup.sh
+index 0b90d8be..bf051e41 100755
+--- a/modules.d/95nvmf/module-setup.sh
++++ b/modules.d/95nvmf/module-setup.sh
+@@ -61,6 +61,14 @@ depends() {
+ installkernel() {
+     instmods nvme_fc lpfc qla2xxx
+     hostonly="" instmods nvme_tcp nvme_fabrics 8021q
++    # lookup NIC kernel modules for active NBFT interfaces
++    if [[ $hostonly ]]; then
++        for i in /sys/class/net/nbft*; do
++            [ -d "$i" ] || continue
++            _driver=$(basename "$(readlink -f "$i/device/driver/module")")
++            [ -z "$_driver" ] || instmods "$_driver"
++        done
++    fi
+ }
+ 
+ # called by dracut
+

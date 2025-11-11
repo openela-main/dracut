@@ -1,0 +1,45 @@
+From ba41a1864778fb949253d4492c8c5d553ef3badc Mon Sep 17 00:00:00 2001
+From: Chris Riches <chris.riches@nutanix.com>
+Date: Thu, 3 Jul 2025 13:42:09 +0000
+Subject: [PATCH] refactor(dracut): introduce clamp_mtimes helper function
+
+Avoid code duplication by introducing `clamp_mtimes`.
+
+(cherry picked from commit b1f5842b36182d556f76d1bf9a023c74800b0880)
+
+Related: RHEL-101901
+---
+ dracut.sh | 11 +++++++----
+ 1 file changed, 7 insertions(+), 4 deletions(-)
+
+diff --git a/dracut.sh b/dracut.sh
+index 43bc2ad0..d9f2ed83 100755
+--- a/dracut.sh
++++ b/dracut.sh
+@@ -2452,9 +2452,13 @@ if [[ $uefi == yes ]]; then
+     mkdir -p "$uefi_outdir"
+ fi
+ 
+-if [[ $DRACUT_REPRODUCIBLE ]]; then
+-    find "$initdir" -newer "$dracutbasedir/dracut-functions.sh" -print0 \
++clamp_mtimes() {
++    find "$1" -newer "$dracutbasedir/dracut-functions.sh" -print0 \
+         | xargs -r -0 touch -h -m -c -r "$dracutbasedir/dracut-functions.sh"
++}
++
++if [[ $DRACUT_REPRODUCIBLE ]]; then
++    clamp_mtimes "$initdir"
+ 
+     if [[ "$(cpio --help)" == *--reproducible* ]]; then
+         CPIO_REPRODUCIBLE=1
+@@ -2469,8 +2473,7 @@ if [[ $create_early_cpio == yes ]]; then
+     echo 1 > "$early_cpio_dir/d/early_cpio"
+ 
+     if [[ $DRACUT_REPRODUCIBLE ]]; then
+-        find "$early_cpio_dir/d" -newer "$dracutbasedir/dracut-functions.sh" -print0 \
+-            | xargs -r -0 touch -h -m -c -r "$dracutbasedir/dracut-functions.sh"
++        clamp_mtimes "$early_cpio_dir/d"
+     fi
+ 
+     # The microcode blob is _before_ the initramfs blob, not after
+

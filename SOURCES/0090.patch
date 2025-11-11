@@ -1,0 +1,38 @@
+From 31bc18ffe0bdec790e18166e44c8a545410f8198 Mon Sep 17 00:00:00 2001
+From: Antonio Alvarez Feijoo <antonio.feijoo@suse.com>
+Date: Wed, 21 Sep 2022 11:54:17 +0200
+Subject: [PATCH] fix(systemd): add missing modprobe@.service
+
+sys-kernel-config.mount needs modprobe@configfs.service since systemd v246.7
+(https://github.com/systemd/systemd/commit/42cc2855), so the kernel configfs
+fails to mount in the initrd.
+
+(cherry picked from commit 928252a145ca44627ba5873e01245eabe246992f)
+
+Resolves: RHEL-97169
+---
+ modules.d/00systemd/module-setup.sh | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/modules.d/00systemd/module-setup.sh b/modules.d/00systemd/module-setup.sh
+index 38393855..2d6fc9ff 100755
+--- a/modules.d/00systemd/module-setup.sh
++++ b/modules.d/00systemd/module-setup.sh
+@@ -83,6 +83,7 @@ install() {
+         \
+         "$systemdsystemunitdir"/sys-kernel-config.mount \
+         \
++        "$systemdsystemunitdir"/modprobe@.service \
+         "$systemdsystemunitdir"/kmod-static-nodes.service \
+         "$systemdsystemunitdir"/systemd-tmpfiles-setup.service \
+         "$systemdsystemunitdir"/systemd-tmpfiles-setup-dev.service \
+@@ -176,6 +177,8 @@ install() {
+             /etc/systemd/journald.conf.d/*.conf \
+             /etc/systemd/system.conf \
+             /etc/systemd/system.conf.d/*.conf \
++            "$systemdsystemconfdir"/modprobe@.service \
++            "$systemdsystemconfdir/modprobe@.service.d/*.conf" \
+             /etc/hosts \
+             /etc/hostname \
+             /etc/nsswitch.conf \
+

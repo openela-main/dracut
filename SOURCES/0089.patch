@@ -13,7 +13,7 @@ Fixes #1275
 
 (cherry picked from commit 000cfa0c278c0858e81c8dd2ff7231f069f0afb1)
 
-Resolves: RHEL-95895
+Resolves: RHEL-92584
 ---
  dracut.sh | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)

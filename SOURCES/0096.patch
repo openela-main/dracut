@@ -8,7 +8,7 @@ Deprecated since 778b3543609d8c9d32df7111229f4072d00d02f0 (Nov 25, 2014).
 
 (cherry picked from commit 954420374a63be32f6ece5fc1476ba18163da1f7)
 
-Related: RHEL-109565
+Related: RHEL-96106
 ---
  man/dracut.cmdline.7.asc                 | 2 --
  modules.d/90multipath/multipathd.service | 1 -

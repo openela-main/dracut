@@ -8,7 +8,7 @@ Install `multipathd.service` provided by upstream, and add a dropin to support
 
 (cherry picked from commit bb343fa83de4c73890e9054329249a1491733a5c)
 
-Resolves: RHEL-109565
+Resolves: RHEL-96106
 ---
  modules.d/90multipath/module-setup.sh        | 3 ++-
  modules.d/90multipath/multipathd-dracut.conf | 2 ++

@@ -5,7 +5,7 @@
 # strip the automatically generated dep here and instead co-own the
 # directory.
 %global __requires_exclude pkg-config
-%define dist_free_release 89.git20250311
+%define dist_free_release 102.git20250818
 
 Name: dracut
 Version: 057
@@ -115,12 +115,19 @@ Patch83: 0083.patch
 Patch84: 0084.patch
 Patch85: 0085.patch
 Patch86: 0086.patch
+Patch87: 0087.patch
+Patch88: 0088.patch
 Patch89: 0089.patch
-
+Patch90: 0090.patch
+Patch93: 0093.patch
+Patch94: 0094.patch
+Patch95: 0095.patch
 Patch96: 0096.patch
 Patch97: 0097.patch
-
-Patch102: 0102.patch
+Patch98: 0098.patch
+Patch99: 0099.patch
+Patch100: 0100.patch
+Patch101: 0101.patch
 
 Source1: https://www.gnu.org/licenses/lgpl-2.1.txt
 
@@ -577,14 +584,21 @@ echo 'dracut_rescue_image="yes"' > $RPM_BUILD_ROOT%{dracutlibdir}/dracut.conf.d/
 %{_prefix}/lib/kernel/install.d/51-dracut-rescue.install
 
 %changelog
-* Fri Sep 19 2025 Pavel Valena <pvalena@redhat.com> - 057-89.git20250311
+* Mon Aug 18 2025 Pavel Valena <pvalena@redhat.com> - 057-102.git20250818
+- fix(systemd): partial backport of
+
+* Fri Aug 08 2025 Pavel Valena <pvalena@redhat.com> - 057-101.git20250808
+- fix(systemd): add missing modprobe@.service
+- fix: let check_vol_slaves_all return 1 when checks on all
+- improvement(74nvmf): lookup required NIC kernel modules for
+- fix(74nvmf): set root=nvmf
 - chore(multipath): remove `rd_NO_MULTIPATH` kernel command
 - refactor(multipath): remove custom multipathd.service
-- fix(multipath): disable user_friendly_names with mpathconf
-  Resolves: RHEL-109565
-  Resolves: RHEL-96101
+- fix(systemd): systemd.volatile needs overlayfs kernel module
+- refactor(dracut): introduce clamp_mtimes helper function
+- fix(dracut): ensure hardlink deduplication is reproducible
 
-* Mon Jun 09 2025 Pavel Valena <pvalena@redhat.com> - 057-88.git20250311
+* Mon Jun 09 2025 Pavel Valena <pvalena@redhat.com> - 057-90.git20250609
 - fix(dracut.sh): don't pass empty string as dir
 
 * Tue Mar 11 2025 Pavel Valena <pvalena@redhat.com> - 057-87.git20250311

@@ -1,0 +1,67 @@
+From 45c50b57bfc5b6675604f90e3f6ff65511ead59c Mon Sep 17 00:00:00 2001
+From: Chris Riches <chris.riches@nutanix.com>
+Date: Wed, 9 Jul 2025 16:40:18 +0000
+Subject: [PATCH] fix(dracut): ensure hardlink deduplication is reproducible
+
+By default, hardlink will only deduplicate files with identical mtimes,
+down to one-second granularity. If a dracut module rapidly generates
+multiple identical files, it is completely up to chance as to whether
+their mtimes cross a second boundary or not, and thus whether they get
+deduplicated or not. This results in non-reproducible output.
+
+Re-order hardlink with respect to clamping to avoid this problem.
+
+Fixes: https://issues.redhat.com/browse/RHEL-101901
+(cherry picked from commit f779e439ec60eafcb400501d4741c755a95fdc86)
+
+Resolves: RHEL-101901
+---
+ dracut.sh | 21 ++++++++++++++-------
+ 1 file changed, 14 insertions(+), 7 deletions(-)
+
+diff --git a/dracut.sh b/dracut.sh
+index d9f2ed83..47adee2f 100755
+--- a/dracut.sh
++++ b/dracut.sh
+@@ -2245,12 +2245,6 @@ for ((i = 0; i < ${#include_src[@]}; i++)); do
+     fi
+ done
+ 
+-if [[ $do_hardlink == yes ]] && command -v hardlink > /dev/null; then
+-    dinfo "*** Hardlinking files ***"
+-    hardlink "$initdir" 2>&1 | dinfo
+-    dinfo "*** Hardlinking files done ***"
+-fi
+-
+ # strip binaries
+ if [[ $do_strip == yes ]]; then
+     # Prefer strip from elfutils for package size
+@@ -2453,7 +2447,7 @@ if [[ $uefi == yes ]]; then
+ fi
+ 
+ clamp_mtimes() {
+-    find "$1" -newer "$dracutbasedir/dracut-functions.sh" -print0 \
++    find "$@" -newer "$dracutbasedir/dracut-functions.sh" -print0 \
+         | xargs -r -0 touch -h -m -c -r "$dracutbasedir/dracut-functions.sh"
+ }
+ 
+@@ -2467,6 +2461,19 @@ if [[ $DRACUT_REPRODUCIBLE ]]; then
+     fi
+ fi
+ 
++# Hardlink is mtime-sensitive; do it after the above clamp.
++if [[ $do_hardlink == yes ]] && command -v hardlink > /dev/null; then
++    dinfo "*** Hardlinking files ***"
++    hardlink "$initdir" 2>&1 | ddebug
++    dinfo "*** Hardlinking files done ***"
++
++    # Hardlink itself breaks mtimes on directories as we may have added/removed
++    # dir entries. Fix those up.
++    if [[ $DRACUT_REPRODUCIBLE ]]; then
++        clamp_mtimes "$initdir" -type d
++    fi
++fi
++
+ [[ $EUID != 0 ]] && cpio_owner="0:0"
+ 
+ if [[ $create_early_cpio == yes ]]; then
