@@ -1,0 +1,65 @@
+From 4c9d4c3f773619a7730927f0e2e5ac0f7f53692f Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?=E2=80=9CMasahiro?= <mmatsuya@redhat.com>
+Date: Fri, 3 Feb 2023 12:08:26 +0900
+Subject: [PATCH] fix(url-lib.sh): nfs_already_mounted() with trailing slash in
+ nfs path
+
+nfs_already_mounted() doesn't work when the installation ISO and kickstart file on a same NFS share are specified with inst.repo and inst.ks boot parameter as below.
+
+   inst.repo=nfs:192.168.1.1:/home/data/rhel9.iso inst.ks=nfs:192.168.1.1:/home/data/ks.cfg
+
+   NOTE: /home/data is configured for nfs share on 192.168.1.1
+
+One problem is a file (not a directory) was passed into nfs_already_mounted().
+nfs_already_mounted() is the function to judge if the given directory is already mounted.
+So, filepath should be passed in nfs_fetch_url().
+
+The other problem is about the trailing slash in the nfs path in /proc/mounts.
+
+The /proc/mounts has an entry after nfs mount of inst.repo.
+
+   192.168.1.1:/data/   /run/install/isodir  nfs  ro,relatime,<snip>
+
+In this case, nfs_already_mounted() returns "/run/install/isodir//home/data/ks.cfg" wrongly. The following is from the log.
+
+[   14.556279] localhost.localdomain dracut-initqueue[1282]: ///lib/url-lib.sh@156(nfs_fetch_url): nfs_already_mounted 192.168.122.1 /home/data/ks.cfg
+[   14.556279] localhost.localdomain dracut-initqueue[1282]: ///lib/url-lib.sh@137(nfs_already_mounted): local server=192.168.122.1 path=/home/data/ks.cfg s= p=
+...
+[   14.654966] localhost.localdomain dracut-initqueue[1282]: ///lib/url-lib.sh@140(nfs_already_mounted): '[' 192.168.122.1 = 192.168.122.1 ']'
+[   14.654966] localhost.localdomain dracut-initqueue[1282]: ///lib/url-lib.sh@141(nfs_already_mounted): '[' /home/data/ks.cfg = /home/data/ ']'
+[   14.654966] localhost.localdomain dracut-initqueue[1282]: ///lib/url-lib.sh@143(nfs_already_mounted): str_starts /home/data/ks.cfg /home/data/
+[   14.654966] localhost.localdomain dracut-initqueue[1282]: ///lib/dracut-lib.sh@51(str_starts): '[' ks.cfg '!=' /home/data/ks.cfg ']'
+[   14.654966] localhost.localdomain dracut-initqueue[1282]: ///lib/url-lib.sh@144(nfs_already_mounted): echo /run/install/isodir//home/data/ks.cfg
+...
+[   14.658069] localhost.localdomain dracut-initqueue[934]: //lib/url-lib.sh@156(nfs_fetch_url): mntdir=/run/install/isodir//home/data/ks.cfg
+
+This function doesn't expect the trailiing slash of the nfs path in /proc/mounts, so it should be removed before processing it.
+
+(cherry picked from commit b731369c5fe7f9247337fe08017638a38f36cfca)
+
+Resolves: RHEL-108623
+---
+ modules.d/45url-lib/url-lib.sh | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/modules.d/45url-lib/url-lib.sh b/modules.d/45url-lib/url-lib.sh
+index 56d0d683..e7c0d563 100755
+--- a/modules.d/45url-lib/url-lib.sh
++++ b/modules.d/45url-lib/url-lib.sh
+@@ -122,6 +122,7 @@ nfs_already_mounted() {
+     local server="$1" path="$2" localdir="" s="" p=""
+     cat /proc/mounts | while read src mnt rest || [ -n "$src" ]; do
+         splitsep ":" "$src" s p
++        p=${p%/}
+         if [ "$server" = "$s" ]; then
+             if [ "$path" = "$p" ]; then
+                 echo $mnt
+@@ -138,7 +139,7 @@ nfs_fetch_url() {
+     local filepath="${path%/*}" filename="${path##*/}" mntdir=""
+ 
+     # skip mount if server:/filepath is already mounted
+-    mntdir=$(nfs_already_mounted "$server" "$path")
++    mntdir=$(nfs_already_mounted "$server" "$filepath")
+     if [ -z "$mntdir" ]; then
+         local mntdir="$(mkuniqdir /run nfs_mnt)"
+         mount_nfs "$nfs:$server:$filepath${options:+:$options}" "$mntdir"

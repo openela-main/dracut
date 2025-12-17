@@ -5,7 +5,7 @@
 # strip the automatically generated dep here and instead co-own the
 # directory.
 %global __requires_exclude pkg-config
-%define dist_free_release 237.git20250603
+%define dist_free_release 239.git20251127
 
 Name: dracut
 Version: 049
@@ -264,6 +264,8 @@ Patch233: 0233.patch
 Patch234: 0234.patch
 Patch235: 0235.patch
 Patch236: 0236.patch
+Patch237: 0237.patch
+Patch238: 0238.patch
 
 Source1: https://www.gnu.org/licenses/lgpl-2.1.txt
 
@@ -720,6 +722,10 @@ echo '# Since rhel-8.3 dracut moved to use NetworkManager
 add_dracutmodules+=" network-legacy "' > /etc/dracut.conf.d/50-network-legacy.conf
 
 %changelog
+* Thu Nov 27 2025 Pavel Valena <pvalena@redhat.com> - 049-239.git20251127
+- fix(multipath): disable user_friendly_names with mpathconf
+- fix(url-lib.sh): nfs_already_mounted() with trailing slash in
+
 * Wed Jun 04 2025 Pavel Valena <pvalena@redhat.com> - 049-237.git20250603
 - fix(rescue): create hmac file for rescue kernel
 - fix(spec): drop %config from 50-network-legacy.conf
