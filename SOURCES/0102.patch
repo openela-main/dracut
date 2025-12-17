@@ -1,0 +1,54 @@
+From ae61b2c93a032c3e74950d6730d32363fed9621f Mon Sep 17 00:00:00 2001
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Date: Thu, 24 Apr 2025 17:51:01 -0400
+Subject: [PATCH] fix(multipath): disable user_friendly_names with mpathconf
+
+If dracut is creating /etc/multipath.conf by calling mpathconf in either
+multipathd-configure.service or multipathd.sh, there is a chance that
+the multipath config in the real root differs. Specifically, it might
+have chosen different user_friendly_names for the devices. When the
+systems switches to the real root, multipath may not be able to switch
+the devices to their configured names because those might already be
+in use. To avoid this, call mpathconf with "--user_friendly_names n"
+to create a multipath.conf with user_friendly_names disabled. If all
+devices use WWID names, it is always possible for multipath to rename
+them later.
+
+Fixes b8a92b715 ("multipath: add automatic configuration for multipath")
+
+(cherry picked from commit f36f2869859eb5f9613a94a28dfaf31505e645cc)
+
+Resolves: RHEL-117128
+---
+ modules.d/90multipath/multipathd-configure.service | 2 +-
+ modules.d/90multipath/multipathd.sh                | 3 ++-
+ 2 files changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/modules.d/90multipath/multipathd-configure.service b/modules.d/90multipath/multipathd-configure.service
+index de690615..6dedd9b9 100644
+--- a/modules.d/90multipath/multipathd-configure.service
++++ b/modules.d/90multipath/multipathd-configure.service
+@@ -13,7 +13,7 @@ ConditionPathExists=!/etc/multipath.conf
+ [Service]
+ Type=oneshot
+ ExecStartPre=-/usr/bin/mkdir -p /etc/multipath/multipath.conf.d
+-ExecStart=/usr/sbin/mpathconf --enable
++ExecStart=/usr/sbin/mpathconf --enable --user_friendly_names n
+ 
+ [Install]
+ WantedBy=sysinit.target
+diff --git a/modules.d/90multipath/multipathd.sh b/modules.d/90multipath/multipathd.sh
+index 62649003..6b6b2666 100755
+--- a/modules.d/90multipath/multipathd.sh
++++ b/modules.d/90multipath/multipathd.sh
+@@ -2,7 +2,8 @@
+ 
+ if [ "$(getarg rd.multipath)" = "default" ] && [ ! -e /etc/multipath.conf ]; then
+     mkdir -p /etc/multipath/multipath.conf.d
+-    mpathconf --enable
++    mpathconf --enable --user_friendly_names n
++
+ fi
+ 
+ if getargbool 1 rd.multipath && [ -e /etc/multipath.conf ]; then
+

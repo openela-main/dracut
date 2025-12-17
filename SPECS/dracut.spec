@@ -5,7 +5,7 @@
 # strip the automatically generated dep here and instead co-own the
 # directory.
 %global __requires_exclude pkg-config
-%define dist_free_release 102.git20250818
+%define dist_free_release 104.git20250919
 
 Name: dracut
 Version: 057
@@ -128,6 +128,7 @@ Patch98: 0098.patch
 Patch99: 0099.patch
 Patch100: 0100.patch
 Patch101: 0101.patch
+Patch102: 0102.patch
 
 Source1: https://www.gnu.org/licenses/lgpl-2.1.txt
 
@@ -584,6 +585,9 @@ echo 'dracut_rescue_image="yes"' > $RPM_BUILD_ROOT%{dracutlibdir}/dracut.conf.d/
 %{_prefix}/lib/kernel/install.d/51-dracut-rescue.install
 
 %changelog
+* Fri Sep 19 2025 Pavel Valena <pvalena@redhat.com> - 057-104.git20250919
+- fix(multipath): disable user_friendly_names with mpathconf
+
 * Mon Aug 18 2025 Pavel Valena <pvalena@redhat.com> - 057-102.git20250818
 - fix(systemd): partial backport of
 
