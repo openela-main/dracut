@@ -5,7 +5,7 @@
 # strip the automatically generated dep here and instead co-own the
 # directory.
 %global __requires_exclude pkg-config
-%define dist_free_release 104.git20250919
+%define dist_free_release 110.git20260130
 
 Name: dracut
 Version: 057
@@ -129,6 +129,12 @@ Patch99: 0099.patch
 Patch100: 0100.patch
 Patch101: 0101.patch
 Patch102: 0102.patch
+Patch104: 0104.patch
+Patch105: 0105.patch
+Patch106: 0106.patch
+Patch107: 0107.patch
+Patch108: 0108.patch
+Patch109: 0109.patch
 
 Source1: https://www.gnu.org/licenses/lgpl-2.1.txt
 
@@ -585,8 +591,15 @@ echo 'dracut_rescue_image="yes"' > $RPM_BUILD_ROOT%{dracutlibdir}/dracut.conf.d/
 %{_prefix}/lib/kernel/install.d/51-dracut-rescue.install
 
 %changelog
-* Fri Sep 19 2025 Pavel Valena <pvalena@redhat.com> - 057-104.git20250919
+* Fri Jan 30 2026 Pavel Valena <pvalena@redhat.com> - 057-110.git20260130
+- fix(systemd-repart): allow partition format
+- feat(install.d):according to the changes of
+- feat(i18n): pull 'drm' or 'simpledrm' module unless excluded
+- fix(pcsc): add opensc load module file
+- fix(pcsc): add --disable-polkit to pcscd.service
+- fix(pkcs11): delete trailing dot on
 - fix(multipath): disable user_friendly_names with mpathconf
+  Resolves: RHEL-103385,RHEL-103974,RHEL-109631,RHEL-145135,RHEL-91322
 
 * Mon Aug 18 2025 Pavel Valena <pvalena@redhat.com> - 057-102.git20250818
 - fix(systemd): partial backport of

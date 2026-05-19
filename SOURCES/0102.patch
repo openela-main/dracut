@@ -18,7 +18,7 @@ Fixes b8a92b715 ("multipath: add automatic configuration for multipath")
 
 (cherry picked from commit f36f2869859eb5f9613a94a28dfaf31505e645cc)
 
-Resolves: RHEL-117128
+Resolves: RHEL-91322
 ---
  modules.d/90multipath/multipathd-configure.service | 2 +-
  modules.d/90multipath/multipathd.sh                | 3 ++-
