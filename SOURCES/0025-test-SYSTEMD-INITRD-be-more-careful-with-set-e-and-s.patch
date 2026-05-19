@@ -1,7 +1,7 @@
 From 7edb5a72481052de7da5827ddf2dcb665e5a4ca4 Mon Sep 17 00:00:00 2001
 From: Frantisek Sumsal <frantisek@sumsal.cz>
 Date: Wed, 6 Aug 2025 16:22:34 +0200
-Subject: [PATCH 29/30] test(SYSTEMD-INITRD): be more careful with `set -e` and
+Subject: [PATCH 25/31] test(SYSTEMD-INITRD): be more careful with `set -e` and
  subshells
 
 When the condition in the subshell fails (i.e. none of the
@@ -55,5 +55,5 @@ index 34ddcbd6..51dc82fb 100755
      )
  
 -- 
-2.50.1
+2.52.0
 

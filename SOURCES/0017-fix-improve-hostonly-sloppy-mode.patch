@@ -1,7 +1,7 @@
 From 36d81322f0bcc2ff92cd7c1bee9a0c175b988693 Mon Sep 17 00:00:00 2001
 From: Jo Zzsi <jozzsicsataban@gmail.com>
 Date: Sun, 11 May 2025 21:16:42 -0400
-Subject: [PATCH 16/20] fix: improve hostonly sloppy mode
+Subject: [PATCH 17/31] fix: improve hostonly sloppy mode
 
 Resolve regression introduced by 8519dcd.
 
@@ -36,5 +36,5 @@ index 72fbc41f..2daacb93 100755
          fi
  
 -- 
-2.50.1
+2.52.0
 

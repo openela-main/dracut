@@ -1,7 +1,7 @@
 From f7c8c809798d5980d182509f9e1a448a7c65af73 Mon Sep 17 00:00:00 2001
 From: Coiby Xu <coxu@redhat.com>
 Date: Mon, 26 May 2025 15:34:30 +0800
-Subject: [PATCH 21/23] fix: let check_vol_slaves_all return 1 when checks on
+Subject: [PATCH 22/31] fix: let check_vol_slaves_all return 1 when checks on
  all slaves fail
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -51,5 +51,5 @@ index 94f0228f..8eadc345 100755
  
  # fs_get_option <filesystem options> <search for option>
 -- 
-2.50.1
+2.52.0
 

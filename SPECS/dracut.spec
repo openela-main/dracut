@@ -8,7 +8,7 @@
 
 Name: dracut
 Version: 107
-Release: 3%{?dist}
+Release: 4%{?dist}
 
 Summary: Initramfs generator using udev
 
@@ -40,65 +40,81 @@ Patch5:  0005-feat-lsinitrd.sh-look-for-initrd-in-usr-lib-modules.patch
 # feat(fips): include fips module unconditionally
 # Author: Pavel Valena <pvalena@redhat.com>
 Patch6:  0006-feat-fips-include-fips-module-unconditionally.patch
+# build: upgrade to dracut 105
+# Author: Pavel Valena <pvalena@redhat.com>
+Patch7:  0007-build-upgrade-to-dracut-105.patch
 # revert: "fix(rescue): make rescue always no-hostonly"
 # Author: Pavel Valena <pvalena@redhat.com>
-Patch7:  0007-revert-fix-rescue-make-rescue-always-no-hostonly.patch
+Patch8:  0008-revert-fix-rescue-make-rescue-always-no-hostonly.patch
 # fix(dracut-install): initize fts pointer
 # Author: Pavel Valena <pvalena@redhat.com>
-Patch8:  0008-fix-dracut-install-initize-fts-pointer.patch
+Patch9:  0009-fix-dracut-install-initize-fts-pointer.patch
 # feat: add openssl module
 # Author: Pavel Valena <pvalena@redhat.com>
-Patch9:  0009-feat-add-openssl-module.patch
+Patch10: 0010-feat-add-openssl-module.patch
 # fix(openssl): harden ossl build CFLAGS
 # Author: Pavel Valena <pvalena@redhat.com>
-Patch10: 0010-fix-openssl-harden-ossl-build-CFLAGS.patch
+Patch11: 0011-fix-openssl-harden-ossl-build-CFLAGS.patch
 # fix(ossl): copy executables for the test suite
 # Author: Pavel Valena <pvalena@redhat.com>
-Patch11: 0011-fix-ossl-copy-executables-for-the-test-suite.patch
+Patch12: 0012-fix-ossl-copy-executables-for-the-test-suite.patch
 # fix(rescue): create hmac file for rescue kernel
 # Author: Pavel Valena <pvalena@redhat.com>
-Patch12: 0012-fix-rescue-create-hmac-file-for-rescue-kernel.patch
+Patch13: 0013-fix-rescue-create-hmac-file-for-rescue-kernel.patch
 # Revert "feat(systemd-sysusers): run systemd-sysusers as part
 # Author: Adam Williamson <awilliam@redhat.com>
-Patch13: 0013-Revert-feat-systemd-sysusers-run-systemd-sysusers-as.patch
+Patch14: 0014-Revert-feat-systemd-sysusers-run-systemd-sysusers-as.patch
 # Revert "chore: remove unused function"
 # Author: Adam Williamson <awilliam@redhat.com>
-Patch14: 0014-Revert-chore-remove-unused-function.patch
+Patch15: 0015-Revert-chore-remove-unused-function.patch
 # fix(ossl): ignore compiler warnings
 # Author: Pavel Valena <pvalena@redhat.com>
-Patch15: 0015-fix-ossl-ignore-compiler-warnings.patch
+Patch16: 0016-fix-ossl-ignore-compiler-warnings.patch
 # fix: improve hostonly sloppy mode
 # Author: Jo Zzsi <jozzsicsataban@gmail.com>
-Patch16: 0016-fix-improve-hostonly-sloppy-mode.patch
+Patch17: 0017-fix-improve-hostonly-sloppy-mode.patch
 # fix(dracut.sh): don't pass empty string as dir
 # Author: David Tardon <dtardon@redhat.com>
-Patch17: 0017-fix-dracut.sh-don-t-pass-empty-string-as-dir.patch
+Patch18: 0018-fix-dracut.sh-don-t-pass-empty-string-as-dir.patch
 # feat(systemd): drop unnecessary dependency on libgcrypt
 # Author: Pavel Valena <pvalena@redhat.com>
-Patch18: 0018-feat-systemd-drop-unnecessary-dependency-on-libgcryp.patch
+Patch19: 0019-feat-systemd-drop-unnecessary-dependency-on-libgcryp.patch
 # fix(kernel-modules-extra): remove stray \ before /
 # Author: Pavel Valena <pvalena@redhat.com>
-Patch19: 0019-fix-kernel-modules-extra-remove-stray-before.patch
+Patch20: 0020-fix-kernel-modules-extra-remove-stray-before.patch
 # Revert "fix(base): do not require chroot inside initramfs"
 # Author: Pavel Valena <pvalena@redhat.com>
-Patch20: 0020-Revert-fix-base-do-not-require-chroot-inside-initram.patch
+Patch21: 0021-Revert-fix-base-do-not-require-chroot-inside-initram.patch
 # fix: let check_vol_slaves_all return 1 when checks on all slaves fail
 # Author: Coiby Xu <coxu@redhat.com>
-Patch21: 0021-fix-let-check_vol_slaves_all-return-1-when-checks-on.patch
+Patch22: 0022-fix-let-check_vol_slaves_all-return-1-when-checks-on.patch
 # improvement(74nvmf): lookup required NIC kernel modules for NBFT interfaces
 # Author: Tomas Bzatek <tbzatek@redhat.com>
-Patch22: 0022-improvement-74nvmf-lookup-required-NIC-kernel-module.patch
+Patch23: 0023-improvement-74nvmf-lookup-required-NIC-kernel-module.patch
 # fix(74nvmf): set root=nvmf
 # Author: Tomas Bzatek <tbzatek@redhat.com>
-Patch23: 0023-fix-74nvmf-set-root-nvmf.patch
-
-
+Patch24: 0024-fix-74nvmf-set-root-nvmf.patch
 # test(SYSTEMD-INITRD): be more careful with `set -e` and subshells
 # Author: Frantisek Sumsal <frantisek@sumsal.cz>
-Patch100: 0100-test-SYSTEMD-INITRD-be-more-careful-with-set-e-and-s.patch
-# test: use network instead of network-legacy
+Patch25: 0025-test-SYSTEMD-INITRD-be-more-careful-with-set-e-and-s.patch
+# test: fixup NFS test.sh
 # Author: Pavel Valena <pvalena@redhat.com>
-#Patch102: 0102-test-use-network-instead-of-network-legacy.patch
+Patch26: 0026-test-fixup-NFS-test.sh.patch
+# fix(systemd-udevd): handle root=gpt-auto for systemd-v258
+# Author: Antonio Alvarez Feijoo <antonio.feijoo@suse.com>
+Patch27: 0027-fix-systemd-udevd-handle-root-gpt-auto-for-systemd-v.patch
+# fix(systemd-repart): allow partition format
+# Author: Emanuele Giuseppe Esposito <eesposit@redhat.com>
+Patch28: 0028-fix-systemd-repart-allow-partition-format.patch
+# feat(install.d): do not remove UKIs on remove)
+# Author: Xiong Xiaoqiang <xxiong@redhat.com>
+Patch29: 0029-feat-install.d-do-not-remove-UKIs-on-remove.patch
+# fix(dracut.install): remove extraneous quotes in dracut arguments
+# Author: Li Tian <litian@redhat.com>
+Patch30: 0030-fix-dracut.install-remove-extraneous-quotes-in-dracu.patch
+# feat(i18n): pull 'drm' or 'simpledrm' module unless excluded
+# Author: Pavel Valena <pvalena@redhat.com>
+Patch31: 0031-feat-i18n-pull-drm-or-simpledrm-module-unless-exclud.patch
 
 # Please use source-git to work with this spec file:
 # HowTo: https://packit.dev/source-git/work-with-source-git
@@ -521,6 +537,14 @@ echo 'dracut_rescue_image="yes"' > $RPM_BUILD_ROOT%{dracutlibdir}/dracut.conf.d/
 %{_prefix}/lib/kernel/install.d/51-dracut-rescue.install
 
 %changelog
+* Fri Jan 30 2026 Pavel Valena <pvalena@redhat.com> - 107-4
+- fix(systemd-udevd): handle root=gpt-auto for systemd-v258
+- fix(systemd-repart): allow partition format
+- feat(install.d): do not remove UKIs on remove)
+- fix(dracut.install): remove extraneous quotes in dracut arguments
+- feat(i18n): pull 'drm' or 'simpledrm' module unless excluded
+  Resolves: RHEL-111580,RHEL-111709,RHEL-113071,RHEL-119787,RHEL-132571
+
 * Mon Aug 18 2025 Pavel Valena <pvalena@redhat.com> - 107-3
 - test(SYSTEMD-INITRD): be more careful with `set -e` and subshells
 - test: fixup NFS test.sh

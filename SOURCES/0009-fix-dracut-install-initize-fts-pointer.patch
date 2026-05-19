@@ -1,7 +1,7 @@
 From 0466276d2dabc86dde6ac2ce4f5b6387292bc377 Mon Sep 17 00:00:00 2001
 From: Pavel Valena <pvalena@redhat.com>
 Date: Thu, 13 Feb 2025 22:18:06 +0100
-Subject: [PATCH 08/16] fix(dracut-install): initize fts pointer
+Subject: [PATCH 09/31] fix(dracut-install): initize fts pointer
 
 Related: RHEL-65204
 ---
@@ -22,5 +22,5 @@ index bacbe86e..bd72f0b9 100644
          fts = fts_open(paths, FTS_NOSTAT | FTS_PHYSICAL, NULL);
  
 -- 
-2.50.1
+2.52.0
 

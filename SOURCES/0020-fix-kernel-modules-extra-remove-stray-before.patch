@@ -1,7 +1,7 @@
 From ad1ac0f85f4228ea25d38c8e50bf5ef0b59fadcf Mon Sep 17 00:00:00 2001
 From: Pavel Valena <pvalena@redhat.com>
 Date: Mon, 4 Aug 2025 23:48:59 +0200
-Subject: [PATCH 19/20] fix(kernel-modules-extra): remove stray \ before /
+Subject: [PATCH 20/31] fix(kernel-modules-extra): remove stray \ before /
 
 Fixes grep warning:
 ```grep: warning: stray \ before /```
@@ -27,5 +27,5 @@ index 85e2e0ad..c2809356 100755
  
      local cfg
 -- 
-2.50.1
+2.52.0
 

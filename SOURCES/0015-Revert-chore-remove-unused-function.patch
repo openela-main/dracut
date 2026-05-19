@@ -1,7 +1,7 @@
 From 0baf5e0b6c1370b51a20327bd67e0260fc9f8f2e Mon Sep 17 00:00:00 2001
 From: Adam Williamson <awilliam@redhat.com>
 Date: Thu, 10 Jul 2025 10:33:21 -0700
-Subject: [PATCH 14/15] Revert "chore: remove unused function"
+Subject: [PATCH 15/31] Revert "chore: remove unused function"
 
 This reverts commit 81ddde54051351ea17dbb84ef6232820f96740af.
 dracut itself may not use inst_library, but external modules do,
@@ -45,5 +45,5 @@ index 9be00c56..749801fc 100755
      local _ret
      if $DRACUT_INSTALL ${dracutsysrootdir:+-r "$dracutsysrootdir"} ${initdir:+-D "$initdir"} ${loginstall:+-L "$loginstall"} ${DRACUT_RESOLVE_DEPS:+-l} ${DRACUT_FIPS_MODE:+-f} "$@"; then
 -- 
-2.50.1
+2.52.0
 

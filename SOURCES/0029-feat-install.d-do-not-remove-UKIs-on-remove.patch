@@ -1,0 +1,34 @@
+From f6443b250017653d6a03e3bb718c5af39523e83d Mon Sep 17 00:00:00 2001
+From: Xiong Xiaoqiang <xxiong@redhat.com>
+Date: Thu, 28 Aug 2025 22:02:57 +0800
+Subject: [PATCH 29/31] feat(install.d): do not remove UKIs on remove)
+
+According to the changes of systemd/systemd#37897, when --entry-type=type2 is used (for UKI),
+will not remove normal kernel IMAGE. Resolves: systemd/systemd#37897
+
+Signed-off-by: Xiong Xiaoqiang <xxiong@redhat.com>
+
+Resolves: RHEL-111709
+---
+ install.d/50-dracut.install | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/install.d/50-dracut.install b/install.d/50-dracut.install
+index 076b4f5e..61a926dd 100755
+--- a/install.d/50-dracut.install
++++ b/install.d/50-dracut.install
+@@ -120,6 +120,11 @@ case "$COMMAND" in
+         ;;
+ 
+     remove)
++        if [[ "$KERNEL_INSTALL_BOOT_ENTRY_TYPE" == "type2" ]]; then
++            [[ "${KERNEL_INSTALL_VERBOSE:-0}" -gt 0 ]] && \
++                echo "Not removing UKI image (type2); handled by systemd's 90-uki-copy.install"
++            exit 0
++        fi
+         rm -f -- "$BOOT_DIR_ABS/$IMAGE"
+         ret=$?
+         ;;
+-- 
+2.52.0
+

@@ -1,7 +1,7 @@
 From 6fe66a3d55682de7dc24ee8be31752ae2ea08082 Mon Sep 17 00:00:00 2001
 From: Pavel Valena <pvalena@redhat.com>
 Date: Tue, 5 Aug 2025 00:00:30 +0200
-Subject: [PATCH 20/20] Revert "fix(base): do not require chroot inside
+Subject: [PATCH 21/31] Revert "fix(base): do not require chroot inside
  initramfs"
 
 This reverts commit 518133714b769160448a51c512d5e152ea6332da.
@@ -26,5 +26,5 @@ index 7292ba71..9403706a 100755
          dmesg \
          flock \
 -- 
-2.50.1
+2.52.0
 

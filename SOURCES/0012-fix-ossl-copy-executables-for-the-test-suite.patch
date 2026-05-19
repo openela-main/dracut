@@ -1,7 +1,7 @@
 From 1f5c47ebd37d4f493cb4eab6e955ca8e04c3ef89 Mon Sep 17 00:00:00 2001
 From: Pavel Valena <pvalena@redhat.com>
 Date: Mon, 17 Feb 2025 17:31:35 +0100
-Subject: [PATCH 11/16] fix(ossl): copy executables for the test suite
+Subject: [PATCH 12/31] fix(ossl): copy executables for the test suite
 
 and also fix CFLAGS in case of std=c99.
 
@@ -81,5 +81,5 @@ index 200dcbb5..43e7b464 100644
  
  TESTS_CONFIG = $(wildcard tests/config/*.cnf)
 -- 
-2.50.1
+2.52.0
 

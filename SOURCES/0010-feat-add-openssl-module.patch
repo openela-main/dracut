@@ -1,7 +1,7 @@
 From df9c56dd26d9a31ad9045e7b2ca00e0b366d56a8 Mon Sep 17 00:00:00 2001
 From: Pavel Valena <pvalena@redhat.com>
 Date: Mon, 20 Jan 2025 14:16:38 +0100
-Subject: [PATCH 09/16] feat: add openssl module
+Subject: [PATCH 10/31] feat: add openssl module
 
 Resolves: RHEL-76323
 ---
@@ -1017,5 +1017,5 @@ index 00000000..23b1b7de
 +/usr/lib64/ossl-modules/pkcs11.so
 +/usr/lib64/ossl-modules/oqsprovider.so.0.6.0
 -- 
-2.50.1
+2.52.0
 

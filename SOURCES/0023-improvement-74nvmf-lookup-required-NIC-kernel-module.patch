@@ -1,7 +1,7 @@
 From ad715d9108148a25b003df7dd0b3013104d6d717 Mon Sep 17 00:00:00 2001
 From: Tomas Bzatek <tbzatek@redhat.com>
 Date: Tue, 3 Jun 2025 18:34:39 +0200
-Subject: [PATCH 22/23] improvement(74nvmf): lookup required NIC kernel modules
+Subject: [PATCH 23/31] improvement(74nvmf): lookup required NIC kernel modules
  for NBFT interfaces
 
 When dracut is called with '--hostonly-mode strict' and perhaps even
@@ -41,5 +41,5 @@ index b9888a56..9962ce41 100755
  
  # called by dracut
 -- 
-2.50.1
+2.52.0
 

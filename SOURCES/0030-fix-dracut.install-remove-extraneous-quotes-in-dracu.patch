@@ -1,0 +1,32 @@
+From 8ea5a6a2bc5310101c211d70ca104f051b2a3106 Mon Sep 17 00:00:00 2001
+From: Li Tian <litian@redhat.com>
+Date: Thu, 28 Aug 2025 12:24:23 +0800
+Subject: [PATCH 30/31] fix(dracut.install): remove extraneous quotes in dracut
+ arguments
+
+The extraneous quotes become problematic when string is empty.
+dracut is then confused by empty ''.
+
+Signed-off-by: Li Tian <litian@redhat.com>
+
+Resolves: RHEL-111580
+---
+ install.d/50-dracut.install | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/install.d/50-dracut.install b/install.d/50-dracut.install
+index 61a926dd..4d790d52 100755
+--- a/install.d/50-dracut.install
++++ b/install.d/50-dracut.install
+@@ -113,7 +113,7 @@ case "$COMMAND" in
+             ${noimageifnotneeded:+--noimageifnotneeded} \
+             $([[ $KERNEL_INSTALL_VERBOSE == 1 ]] && echo --verbose) \
+             $([[ -n $KERNEL_IMAGE ]] && echo --kernel-image "$KERNEL_IMAGE") \
+-            "$UEFI_OPTS" \
++            $UEFI_OPTS \
+             --kver "$KERNEL_VERSION" \
+             "$BOOT_DIR_ABS/$IMAGE"
+         ret=$?
+-- 
+2.52.0
+

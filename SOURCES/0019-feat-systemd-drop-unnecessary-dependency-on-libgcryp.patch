@@ -1,7 +1,7 @@
 From 639a04bca8cc22a0b3f0e52fc60ec28e911e1189 Mon Sep 17 00:00:00 2001
 From: Pavel Valena <pvalena@redhat.com>
 Date: Mon, 4 Aug 2025 23:26:14 +0200
-Subject: [PATCH 18/20] feat(systemd): drop unnecessary dependency on libgcrypt
+Subject: [PATCH 19/31] feat(systemd): drop unnecessary dependency on libgcrypt
 
 Resolves: RHEL-95542
 ---
@@ -34,5 +34,5 @@ index 77d6a2e9..01a71741 100755
          {"tls/$_arch/",tls/,"$_arch/",}"liblzma.so.*" \
          {"tls/$_arch/",tls/,"$_arch/",}"libzstd.so.*"
 -- 
-2.50.1
+2.52.0
 

@@ -1,0 +1,64 @@
+From a788f4c60c7a72185485952d24266581c9de2353 Mon Sep 17 00:00:00 2001
+From: Pavel Valena <pvalena@redhat.com>
+Date: Tue, 6 Jan 2026 17:59:48 +0100
+Subject: [PATCH 31/31] feat(i18n): pull 'drm' or 'simpledrm' module unless
+ excluded
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Some graphic cards require the 'drm' module to be present to be able to
+setup the console font (e.g. 'i915' requires it).
+
+Also avoid conflicts of 'drm' with 'simpledrm' module.
+
+Signed-off-by: Renaud Métrich <rmetrich@redhat.com>
+Co-authored-by: Renaud Métrich <rmetrich@redhat.com>
+
+(cherry picked from commit d56b581f3ed3e788d8950cce710c6733a08e9d23)
+
+Resolves: RHEL-132571
+---
+ modules.d/10i18n/module-setup.sh | 26 ++++++++++++++++++++++++++
+ 1 file changed, 26 insertions(+)
+
+diff --git a/modules.d/10i18n/module-setup.sh b/modules.d/10i18n/module-setup.sh
+index 4437f084..d39a5a72 100755
+--- a/modules.d/10i18n/module-setup.sh
++++ b/modules.d/10i18n/module-setup.sh
+@@ -9,6 +9,32 @@ check() {
+     return 0
+ }
+ 
++# called by dracut
++depends() {
++    # Include "drm" / "simpledrm" to be able to set the console font properly
++    local _module _drm
++    local -a _modules=(drm simpledrm)
++
++    for _module in "${_modules[@]}"; do
++        if dracut_module_included "$_module"; then
++            _drm="$_module"
++            break
++        fi
++    done
++
++    if [[ -z $_drm ]]; then
++        for _module in "${_modules[@]}"; do
++            module_check "$_module" > /dev/null 2>&1
++            if [[ $? == 255 ]] && ! [[ " $omit_dracutmodules " == *\ $_module\ * ]]; then
++                _drm="$_module"
++                break
++            fi
++        done
++    fi
++
++    echo "$_drm"
++}
++
+ # called by dracut
+ install() {
+     declare -A KEYMAPS
+-- 
+2.52.0
+

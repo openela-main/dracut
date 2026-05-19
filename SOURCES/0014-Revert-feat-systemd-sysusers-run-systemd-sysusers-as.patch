@@ -1,7 +1,7 @@
 From ad54db31bbe6c006d44c1890a48ddea69c0c2529 Mon Sep 17 00:00:00 2001
 From: Adam Williamson <awilliam@redhat.com>
 Date: Fri, 11 Jul 2025 01:37:09 -0700
-Subject: [PATCH 13/15] Revert "feat(systemd-sysusers): run systemd-sysusers as
+Subject: [PATCH 14/31] Revert "feat(systemd-sysusers): run systemd-sysusers as
  part  of the build process"
 
 This reverts commit f3dacc013d90bd2c0bbfa04f5f9b167b65298440.
@@ -96,5 +96,5 @@ index c1ef40cd..00000000
 -    } 3>&1
 -}
 -- 
-2.50.1
+2.52.0
 

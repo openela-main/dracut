@@ -1,7 +1,7 @@
 From 575585575b6309fc3563e58856d6c8f54df0f4a1 Mon Sep 17 00:00:00 2001
 From: Tomas Bzatek <tbzatek@redhat.com>
 Date: Tue, 24 Jun 2025 16:50:31 +0200
-Subject: [PATCH 23/23] fix(74nvmf): set root=nvmf
+Subject: [PATCH 24/31] fix(74nvmf): set root=nvmf
 
 In a restricted image like kdump the kernel commandline argument root=
 is typically absent. However it is required by the 45net-lib/netroot.sh
@@ -34,5 +34,5 @@ index aad2a458..5288553f 100755
 +rootok=1
 +[ -z "$root" ] && root="nvmf"
 -- 
-2.50.1
+2.52.0
 

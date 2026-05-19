@@ -1,7 +1,7 @@
 From dcd5368818a3a428c1e86690ef26ba8e3e887014 Mon Sep 17 00:00:00 2001
 From: David Tardon <dtardon@redhat.com>
 Date: Tue, 20 May 2025 09:31:52 +0200
-Subject: [PATCH 17/20] fix(dracut.sh): don't pass empty string as dir
+Subject: [PATCH 18/31] fix(dracut.sh): don't pass empty string as dir
 
 That causes dropindirs_sort() to look for .conf files in / due to
 expansion:
@@ -32,5 +32,5 @@ index c2b2c949..3b8b0435 100755
      # shellcheck disable=SC1090
      [[ -e $f ]] && . "$f"
 -- 
-2.50.1
+2.52.0
 
