@@ -1,0 +1,185 @@
+From 7243b11f71f17d08a6b60024dfab8e3ddf338458 Mon Sep 17 00:00:00 2001
+From: Pavel Valena <pvalena@redhat.com>
+Date: Thu, 23 Apr 2026 17:20:04 +0200
+Subject: [PATCH] fix(network-legacy): replace `echo` writes with `printf` to
+ prevent injection via DHCP
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+DHCP-provided variables (hostname, gateway) were written with echo into
+files later sourced as shell by net-lib.sh — allowing command injection
+from a rogue DHCP server.
+
+Use printf with explicit variable escaping `%q` for sourced files:
+  - .hostname files (DHCP hostname, sourced at net-lib.sh:131)
+  - .gw files (DHCP routers, sourced at net-lib.sh:140)
+  - do_static gateway and hostname (kernel cmdline ip= parameter)
+
+Plain text config files (.resolv.conf) are left as echo — they are
+read by awk, not sourced as shell, so %q escaping would be incorrect.
+
+Resolves: RHEL-170857
+---
+ modules.d/35network-legacy/dhclient-script.sh | 24 +++++++++++++++-------
+ modules.d/35network-legacy/ifup.sh            | 29 ++++++++++++++++++---------
+ 2 files changed, 36 insertions(+), 17 deletions(-)
+
+diff --git a/modules.d/35network-legacy/dhclient-script.sh b/modules.d/35network-legacy/dhclient-script.sh
+index 82fc7e2c..2272c4c0 100755
+--- a/modules.d/35network-legacy/dhclient-script.sh
++++ b/modules.d/35network-legacy/dhclient-script.sh
+@@ -48,22 +48,24 @@ setup_interface() {
+     if [ -n "$gw" ]; then
+         if [ "$mask" = "255.255.255.255" ]; then
+             # point-to-point connection => set explicit route to gateway
+-            echo ip route add "$gw" dev "$netif" > /tmp/net."$netif".gw
++            printf 'ip route add %q dev %q\n' "$gw" "$netif" > /tmp/net."$netif".gw
+         fi
+ 
+         echo "$gw" | {
+             IFS=' ' read -r main_gw other_gw
+-            echo ip route replace default via "$main_gw" dev "$netif" >> /tmp/net."$netif".gw
++            printf 'ip route replace default via %q dev %q\n' "$main_gw" "$netif" >> /tmp/net."$netif".gw
+             if [ -n "$other_gw" ]; then
+                 for g in $other_gw; do
+-                    echo ip route add default via "$g" dev "$netif" >> /tmp/net."$netif".gw
++                    printf 'ip route add default via %q dev %q\n' "$g" "$netif" >> /tmp/net."$netif".gw
+                 done
+             fi
+         }
+     fi
+ 
+     if getargbool 1 rd.peerdns; then
+-        [ -n "${search}${domain}" ] && echo "search $search $domain" > /tmp/net."$netif".resolv.conf
++        if [ -n "${search}${domain}" ]; then
++            echo "search $search $domain" > /tmp/net."$netif".resolv.conf
++        fi
+         if [ -n "$namesrv" ]; then
+             for s in $namesrv; do
+                 echo nameserver "$s"
+@@ -72,7 +74,10 @@ setup_interface() {
+     fi
+     # Note: hostname can be fqdn OR short hostname, so chop off any
+     # trailing domain name and explicity add any domain if set.
+-    [ -n "$hostname" ] && echo "echo ${hostname%.$domain}${domain:+.$domain} > /proc/sys/kernel/hostname" > /tmp/net."$netif".hostname
++    if [ -n "$hostname" ]; then
++        safe_hostname=$(printf '%s' "${hostname%."$domain"}${domain:+.$domain}")
++        printf 'echo %q > /proc/sys/kernel/hostname\n' "$safe_hostname" > /tmp/net."$netif".hostname
++    fi
+ }
+ 
+ setup_interface6() {
+@@ -95,7 +100,9 @@ setup_interface6() {
+         ${preferred_lft:+preferred_lft ${preferred_lft}}
+ 
+     if getargbool 1 rd.peerdns; then
+-        [ -n "${search}${domain}" ] && echo "search $search $domain" > /tmp/net."$netif".resolv.conf
++        if [ -n "${search}${domain}" ]; then
++            echo "search $search $domain" > /tmp/net."$netif".resolv.conf
++        fi
+         if [ -n "$namesrv" ]; then
+             for s in $namesrv; do
+                 echo nameserver "$s"
+@@ -105,7 +112,10 @@ setup_interface6() {
+ 
+     # Note: hostname can be fqdn OR short hostname, so chop off any
+     # trailing domain name and explicity add any domain if set.
+-    [ -n "$hostname" ] && echo "echo ${hostname%.$domain}${domain:+.$domain} > /proc/sys/kernel/hostname" > /tmp/net."$netif".hostname
++    if [ -n "$hostname" ]; then
++        safe_hostname=$(printf '%s' "${hostname%."$domain"}${domain:+.$domain}")
++        printf 'echo %q > /proc/sys/kernel/hostname\n' "$safe_hostname" > /tmp/net."$netif".hostname
++    fi
+ }
+ 
+ parse_option_121() {
+diff --git a/modules.d/35network-legacy/ifup.sh b/modules.d/35network-legacy/ifup.sh
+index 0dc9541c..84c53dc4 100755
+--- a/modules.d/35network-legacy/ifup.sh
++++ b/modules.d/35network-legacy/ifup.sh
+@@ -28,7 +28,7 @@ do_dhcp_parallel() {
+     # event for nfsroot
+     # XXX add -V vendor class and option parsing per kernel
+ 
+-    [ -e "/tmp/dhclient.$netif.pid" ] && return 0
++    [ -e "/tmp/dhclient.${netif}.pid" ] && return 0
+ 
+     if ! iface_has_carrier "$netif"; then
+         warn "No carrier detected on interface $netif"
+@@ -121,8 +121,10 @@ do_ipv6auto() {
+     wait_for_ipv6_auto "$netif"
+     ret=$?
+ 
+-    [ -n "$hostname" ] && echo "echo $hostname > /proc/sys/kernel/hostname" > "/tmp/net.${netif}.hostname"
+-
++    if [ -n "$hostname" ]; then
++        safe_hostname=$(printf '%s' "${hostname}")
++        printf 'echo %q > /proc/sys/kernel/hostname\n' "$safe_hostname" > /tmp/net."$netif".hostname
++    fi
+     return "$ret"
+ }
+ 
+@@ -134,7 +136,10 @@ do_ipv6link() {
+     echo 0 > /proc/sys/net/ipv6/conf/"${netif}"/accept_redirects
+     linkup "$netif"
+ 
+-    [ -n "$hostname" ] && echo "echo $hostname > /proc/sys/kernel/hostname" > "/tmp/net.${netif}.hostname"
++    if [ -n "$hostname" ]; then
++        safe_hostname=$(printf '%s' "${hostname}")
++        printf 'echo %q > /proc/sys/kernel/hostname\n' "$safe_hostname" > /tmp/net."$netif".hostname
++    fi
+ 
+     return "$ret"
+ }
+@@ -187,8 +192,12 @@ do_static() {
+         ip addr add "$ip/$mask" ${srv:+peer "$srv"} brd + dev "$netif"
+     fi
+ 
+-    [ -n "$gw" ] && echo "ip route replace default via '$gw' dev '$netif'" > "/tmp/net.$netif.gw"
+-    [ -n "$hostname" ] && echo "echo '$hostname' > /proc/sys/kernel/hostname" > "/tmp/net.$netif.hostname"
++    [ -n "$gw" ] && printf "ip route replace default via %q dev %q\n" "$gw" "$netif" > "/tmp/net.${netif}.gw"
++
++    if [ -n "$hostname" ]; then
++        safe_hostname=$(printf '%s' "${hostname}")
++        printf 'echo %q > /proc/sys/kernel/hostname\n' "$safe_hostname" > /tmp/net."$netif".hostname
++    fi
+ 
+     return 0
+ }
+@@ -417,7 +426,7 @@ fi
+ [ -n "$2" -a "$2" = "-m" ] && [ -z "$netroot" ] && manualup="$2"
+ 
+ if [ -n "$manualup" ]; then
+-    : > "/tmp/net.$netif.manualup"
++    : > "/tmp/net.${netif}.manualup"
+     rm -f "/tmp/net.${netif}.did-setup"
+ else
+     [ -e "/tmp/net.${netif}.did-setup" ] && exit 0
+@@ -458,7 +467,7 @@ for p in $(getargs ip=); do
+     # Store config for later use
+     for i in ip srv gw mask hostname macaddr mtu dns1 dns2; do
+         eval '[ "$'$i'" ] && echo '$i'="$'$i'"'
+-    done > "/tmp/net.$netif.override"
++    done > "/tmp/net.${netif}.override"
+ 
+     for autoopt in $(str_replace "$autoconf" "," " "); do
+         case $autoopt in
+@@ -492,7 +501,7 @@ for p in $(getargs ip=); do
+     # setup nameserver
+     for s in "$dns1" "$dns2" $(getargs nameserver); do
+         [ -n "$s" ] || continue
+-        echo "nameserver $s" >> "/tmp/net.$netif.resolv.conf"
++        echo "nameserver $s" >> "/tmp/net.${netif}.resolv.conf"
+     done
+ 
+     if [ $ret -eq 0 ]; then
+@@ -546,7 +555,7 @@ if [ -z "$NO_AUTO_DHCP" ] && [ ! -e "/tmp/net.${netif}.up" ]; then
+ 
+     for s in $(getargs nameserver); do
+         [ -n "$s" ] || continue
+-        echo "nameserver $s" >> "/tmp/net.$netif.resolv.conf"
++        echo "nameserver $s" >> "/tmp/net.${netif}.resolv.conf"
+     done
+ 
+     if [ "$ret" -eq 0 ] && [ -n "$(ls "/tmp/leaseinfo.${netif}"* 2> /dev/null)" ]; then
+

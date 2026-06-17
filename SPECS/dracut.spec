@@ -5,7 +5,7 @@
 # strip the automatically generated dep here and instead co-own the
 # directory.
 %global __requires_exclude pkg-config
-%define dist_free_release 110.git20260130
+%define dist_free_release 115.git20260527
 
 Name: dracut
 Version: 057
@@ -135,6 +135,10 @@ Patch106: 0106.patch
 Patch107: 0107.patch
 Patch108: 0108.patch
 Patch109: 0109.patch
+Patch110: 0110.patch
+Patch111: 0111.patch
+Patch113: 0113.patch
+Patch114: 0114.patch
 
 Source1: https://www.gnu.org/licenses/lgpl-2.1.txt
 
@@ -591,6 +595,20 @@ echo 'dracut_rescue_image="yes"' > $RPM_BUILD_ROOT%{dracutlibdir}/dracut.conf.d/
 %{_prefix}/lib/kernel/install.d/51-dracut-rescue.install
 
 %changelog
+* Wed May 27 2026 Pavel Valena <pvalena@redhat.com> - 057-115.git20260527
+- build: rebuild without an obsoleted patch
+
+* Thu May 14 2026 Pavel Valena <pvalena@redhat.com> - 057-115.git20260514
+- fix(network): warn on suspicious shell metacharacters in
+- fix(base): escape arguments in initqueue hook script
+  Related: RHEL-170857
+
+* Sat May 02 2026 Pavel Valena <pvalena@redhat.com> - 057-113.git20260502
+- fix(network-legacy): replace `echo` writes with `printf` to
+- fix(iscsi): replace `echo` writes with `printf` to prevent
+- fix(base): replace eval with safe variable indirection in
+  Resolves: RHEL-170857
+
 * Fri Jan 30 2026 Pavel Valena <pvalena@redhat.com> - 057-110.git20260130
 - fix(systemd-repart): allow partition format
 - feat(install.d):according to the changes of
