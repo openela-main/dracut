@@ -1,0 +1,43 @@
+From 632d574019b8c89b4d09492518525ec9c524338e Mon Sep 17 00:00:00 2001
+From: Pavel Valena <pvalena@redhat.com>
+Date: Fri, 29 May 2026 17:53:37 +0200
+Subject: [PATCH] fix(network-manager): escape DHCP lease values in dhcpopts
+ generation
+
+The sed-based substitution in nm-run.sh writes DHCP-controlled values
+from NetworkManager device state files directly into shell variable
+assignments without any escaping. The generated dhcpopts file is later
+sourced as shell, allowing a rogue DHCP server to inject arbitrary
+commands via crafted root-path, next-server, or dhcp-bootfile values.
+
+Replace the sed pipeline with a while/read loop using printf '%q' to
+shell-escape all values before writing them into the dhcpopts file.
+This is consistent with how later dracut versions (rhel-9+) handle the
+same data via kf_parse() with printf '%q'.
+
+Related: RHEL-170847
+
+Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
+---
+ modules.d/35network-manager/nm-run.sh | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/modules.d/35network-manager/nm-run.sh b/modules.d/35network-manager/nm-run.sh
+index 94c19545..0a92afb6 100755
+--- a/modules.d/35network-manager/nm-run.sh
++++ b/modules.d/35network-manager/nm-run.sh
+@@ -22,7 +22,13 @@ do
+     state=/run/NetworkManager/devices/$(cat $_i/ifindex)
+     grep -q connection-uuid= $state 2>/dev/null || continue
+     ifname=${_i##*/}
+-    sed -n 's/root-path/new_root_path/p;s/next-server/new_next_server/p;s/dhcp-bootfile/filename/p' <$state >/tmp/dhclient.$ifname.dhcpopts
++    while IFS='=' read -r key val; do
++        case "$key" in
++            root-path) printf 'new_root_path=%q\n' "$val" ;;
++            next-server) printf 'new_next_server=%q\n' "$val" ;;
++            dhcp-bootfile) printf 'filename=%q\n' "$val" ;;
++        esac
++    done < "$state" > /tmp/dhclient."$ifname".dhcpopts
+     source_hook initqueue/online $ifname
+     /sbin/netroot $ifname
+ done
