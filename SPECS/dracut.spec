@@ -8,7 +8,7 @@
 
 Name: dracut
 Version: 107
-Release: 4%{?dist}
+Release: 7%{?dist}
 
 Summary: Initramfs generator using udev
 
@@ -115,6 +115,21 @@ Patch30: 0030-fix-dracut.install-remove-extraneous-quotes-in-dracu.patch
 # feat(i18n): pull 'drm' or 'simpledrm' module unless excluded
 # Author: Pavel Valena <pvalena@redhat.com>
 Patch31: 0031-feat-i18n-pull-drm-or-simpledrm-module-unless-exclud.patch
+# fix(network-legacy): remove network-legacy completely from the codebase
+# Author: Pavel Valena <pvalena@redhat.com>
+Patch32: 0032-fix-network-legacy-remove-network-legacy-completely-.patch
+# fix(iscsi): replace `echo` writes with `printf` to prevent variable injection
+# Author: Pavel Valena <pvalena@redhat.com>
+Patch33: 0033-fix-iscsi-replace-echo-writes-with-printf-to-prevent.patch
+# fix(base): escape arguments in initqueue hook script generation
+# Author: Pavel Valena <pvalena@redhat.com>
+Patch34: 0034-fix-base-escape-arguments-in-initqueue-hook-script-g.patch
+# fix(net-lib): warn on suspicious shell metacharacters in hostname file
+# Author: Pavel Valena <pvalena@redhat.com>
+Patch35: 0035-fix-net-lib-warn-on-suspicious-shell-metacharacters-.patch
+# fix(systemd-networkd): escape DHCP lease values in dhcpopts generation
+# Author: Pavel Valena <pvalena@redhat.com>
+Patch36: 0036-fix-systemd-networkd-escape-DHCP-lease-values-in-dhc.patch
 
 # Please use source-git to work with this spec file:
 # HowTo: https://packit.dev/source-git/work-with-source-git
@@ -537,6 +552,20 @@ echo 'dracut_rescue_image="yes"' > $RPM_BUILD_ROOT%{dracutlibdir}/dracut.conf.d/
 %{_prefix}/lib/kernel/install.d/51-dracut-rescue.install
 
 %changelog
+* Wed May 27 2026 Pavel Valena <pvalena@redhat.com> - 107-7
+- build: rebuild without an obsoleted patch
+
+* Wed May 20 2026 Pavel Valena <pvalena@redhat.com> - 107-6
+- fix(base): escape arguments in initqueue hook script generation
+- fix(net-lib): warn on suspicious shell metacharacters in hostname file
+- fix(systemd-networkd): escape DHCP lease values in dhcpopts generation
+  Related: RHEL-170844
+
+* Thu May 07 2026 Pavel Valena <pvalena@redhat.com> - 107-5
+- fix(network-legacy): remove network-legacy completely from the codebase
+- fix(iscsi): replace `echo` writes with `printf` to prevent variable injection
+  Resolves: RHEL-170844
+
 * Fri Jan 30 2026 Pavel Valena <pvalena@redhat.com> - 107-4
 - fix(systemd-udevd): handle root=gpt-auto for systemd-v258
 - fix(systemd-repart): allow partition format
