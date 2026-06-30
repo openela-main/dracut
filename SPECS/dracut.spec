@@ -8,7 +8,7 @@
 
 Name: dracut
 Version: 107
-Release: 7%{?dist}
+Release: 8%{?dist}
 
 Summary: Initramfs generator using udev
 
@@ -130,6 +130,9 @@ Patch35: 0035-fix-net-lib-warn-on-suspicious-shell-metacharacters-.patch
 # fix(systemd-networkd): escape DHCP lease values in dhcpopts generation
 # Author: Pavel Valena <pvalena@redhat.com>
 Patch36: 0036-fix-systemd-networkd-escape-DHCP-lease-values-in-dhc.patch
+# revert: "feat(i18n): pull 'drm' or 'simpledrm' module unless excluded"
+# Author: Pavel Valena <pvalena@redhat.com>
+Patch37: 0037-revert-feat-i18n-pull-drm-or-simpledrm-module-unless.patch
 
 # Please use source-git to work with this spec file:
 # HowTo: https://packit.dev/source-git/work-with-source-git
@@ -552,6 +555,9 @@ echo 'dracut_rescue_image="yes"' > $RPM_BUILD_ROOT%{dracutlibdir}/dracut.conf.d/
 %{_prefix}/lib/kernel/install.d/51-dracut-rescue.install
 
 %changelog
+* Thu Jun 25 2026 Pavel Valena <pvalena@redhat.com> - 107-8
+- revert: "feat(i18n): pull 'drm' or 'simpledrm' module unless excluded"
+
 * Wed May 27 2026 Pavel Valena <pvalena@redhat.com> - 107-7
 - build: rebuild without an obsoleted patch
 
