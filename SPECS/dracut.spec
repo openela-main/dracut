@@ -5,7 +5,7 @@
 # strip the automatically generated dep here and instead co-own the
 # directory.
 %global __requires_exclude pkg-config
-%define dist_free_release 115.git20260527
+%define dist_free_release 117.git20260625
 
 Name: dracut
 Version: 057
@@ -139,6 +139,7 @@ Patch110: 0110.patch
 Patch111: 0111.patch
 Patch113: 0113.patch
 Patch114: 0114.patch
+Patch116: 0116.patch
 
 Source1: https://www.gnu.org/licenses/lgpl-2.1.txt
 
@@ -595,6 +596,9 @@ echo 'dracut_rescue_image="yes"' > $RPM_BUILD_ROOT%{dracutlibdir}/dracut.conf.d/
 %{_prefix}/lib/kernel/install.d/51-dracut-rescue.install
 
 %changelog
+* Thu Jun 25 2026 Pavel Valena <pvalena@redhat.com> - 057-117.git20260625
+- revert: "feat(i18n): pull 'drm' or 'simpledrm' module unless
+
 * Wed May 27 2026 Pavel Valena <pvalena@redhat.com> - 057-115.git20260527
 - build: rebuild without an obsoleted patch
 

@@ -1,0 +1,47 @@
+From 76a59a57aeaaa8f86445ae75e71807fb1f0394e0 Mon Sep 17 00:00:00 2001
+From: Pavel Valena <pvalena@redhat.com>
+Date: Wed, 24 Jun 2026 22:54:40 +0200
+Subject: [PATCH] revert: "feat(i18n): pull 'drm' or 'simpledrm' module unless
+ excluded"
+
+This reverts commit 35e125e0b8c013e759b4a1b819d73a99adcbf347.
+
+Resolves: RHEL-188248
+---
+ modules.d/10i18n/module-setup.sh | 23 +----------------------
+ 1 file changed, 1 insertion(+), 22 deletions(-)
+
+diff --git a/modules.d/10i18n/module-setup.sh b/modules.d/10i18n/module-setup.sh
+index 11aedb0cc..35bda36fb 100755
+--- a/modules.d/10i18n/module-setup.sh
++++ b/modules.d/10i18n/module-setup.sh
+@@ -11,28 +11,7 @@ check() {
+ 
+ # called by dracut
+ depends() {
+-    # Include "drm" / "simpledrm" to be able to set the console font properly
+-    local _module _drm
+-    local -a _modules=(drm simpledrm)
+-
+-    for _module in "${_modules[@]}"; do
+-        if dracut_module_included "$_module"; then
+-            _drm="$_module"
+-            break
+-        fi
+-    done
+-
+-    if [[ -z $_drm ]]; then
+-        for _module in "${_modules[@]}"; do
+-            module_check "$_module" > /dev/null 2>&1
+-            if [[ $? == 255 ]] && ! [[ " $omit_dracutmodules " == *\ $_module\ * ]]; then
+-                _drm="$_module"
+-                break
+-            fi
+-        done
+-    fi
+-
+-    echo "$_drm"
++    return 0
+ }
+ 
+ # called by dracut
