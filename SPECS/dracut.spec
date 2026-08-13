@@ -5,7 +5,7 @@
 # strip the automatically generated dep here and instead co-own the
 # directory.
 %global __requires_exclude pkg-config
-%define dist_free_release 244.git20260529
+%define dist_free_release 246.git20260728
 
 Name: dracut
 Version: 049
@@ -271,6 +271,8 @@ Patch240: 0240.patch
 Patch241: 0241.patch
 Patch242: 0242.patch
 Patch243: 0243.patch
+Patch244: 0244.patch
+Patch245: 0245.patch
 
 Source1: https://www.gnu.org/licenses/lgpl-2.1.txt
 
@@ -727,6 +729,10 @@ echo '# Since rhel-8.3 dracut moved to use NetworkManager
 add_dracutmodules+=" network-legacy "' > /etc/dracut.conf.d/50-network-legacy.conf
 
 %changelog
+* Tue Jul 28 2026 Pavel Valena <pvalena@redhat.com> - 049-246.git20260728
+- fix(base): escape die() message in emergency hook script
+- fix(base): replace eval with safe variable indirection in
+
 * Fri May 29 2026 Pavel Valena <pvalena@redhat.com> - 049-244.git20260529
 - fix(network-manager): escape DHCP lease values in dhcpopts
 - fix(network-legacy): replace `echo` writes with `printf` to
