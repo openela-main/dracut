@@ -8,7 +8,7 @@
 
 Name: dracut
 Version: 107
-Release: 8%{?dist}
+Release: 9%{?dist}
 
 Summary: Initramfs generator using udev
 
@@ -133,6 +133,12 @@ Patch36: 0036-fix-systemd-networkd-escape-DHCP-lease-values-in-dhc.patch
 # revert: "feat(i18n): pull 'drm' or 'simpledrm' module unless excluded"
 # Author: Pavel Valena <pvalena@redhat.com>
 Patch37: 0037-revert-feat-i18n-pull-drm-or-simpledrm-module-unless.patch
+# fix(base): escape die() message in emergency hook script
+# Author: Pavel Valena <pvalena@redhat.com>
+Patch38: 0038-fix-base-escape-die-message-in-emergency-hook-script.patch
+# fix(base): replace eval with safe variable indirection in splitsep and export_n
+# Author: Pavel Valena <pvalena@redhat.com>
+Patch39: 0039-fix-base-replace-eval-with-safe-variable-indirection.patch
 
 # Please use source-git to work with this spec file:
 # HowTo: https://packit.dev/source-git/work-with-source-git
@@ -555,6 +561,10 @@ echo 'dracut_rescue_image="yes"' > $RPM_BUILD_ROOT%{dracutlibdir}/dracut.conf.d/
 %{_prefix}/lib/kernel/install.d/51-dracut-rescue.install
 
 %changelog
+* Tue Jul 28 2026 Pavel Valena <pvalena@redhat.com> - 107-9
+- fix(base): escape die() message in emergency hook script
+- fix(base): replace eval with safe variable indirection in splitsep and export_n
+
 * Thu Jun 25 2026 Pavel Valena <pvalena@redhat.com> - 107-8
 - revert: "feat(i18n): pull 'drm' or 'simpledrm' module unless excluded"
 
