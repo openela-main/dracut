@@ -1,70 +1,97 @@
-From c810e813fb25766fafb213fab4c8af66490bf8ce Mon Sep 17 00:00:00 2001
+From a633292e4c661c6baaabf9f8d8fc818ca3e0233d Mon Sep 17 00:00:00 2001
 From: Pavel Valena <pvalena@redhat.com>
-Date: Tue, 12 May 2026 03:27:22 +0200
-Subject: [PATCH] fix(base): escape arguments in initqueue hook script
- generation
+Date: Wed, 29 Apr 2026 04:46:15 +0200
+Subject: [PATCH] fix(iscsi): replace `echo` writes with `printf` to prevent
+ variable injection
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 
-initqueue.sh writes arguments directly into generated hook scripts
-via `echo "$exe" "$@"`. These scripts are later sourced by
-dracut-initqueue.sh, so shell metacharacters in arguments (e.g.
-DHCP-derived $netroot passed from parse-iscsiroot.sh) execute as
-root in initramfs.
+Use printf with explicit variable escaping `%q` for shell scripts:
+  - mount-lun.sh hookdir script (iscsi_lun variable)
+  - udev rule (iscsi_lun sanitized via tr -d '"')
+  - initiatorname.iscsi (sourced as shell at iscsiroot.sh:161-163)
 
-Replace `echo` with `printf '%q'` to shell-escape all arguments
-before writing them into the hook script, preventing command
-injection via DHCP-controlled netroot values.
+Note: initiatorname.iscsi is also read by iscsid as plain text (no
+shell unquoting). For valid IQNs ([a-z0-9.:_-]), %q is a no-op, so
+iscsid sees the value unchanged. For malicious values with special
+characters, %q would produce shell escaping that iscsid reads
+literally — breaking the connection rather than allowing injection.
 
-Remove the fragile embedded single-quote wrapping ("'$var'") from
-parse-iscsiroot.sh call sites (lines 90, 102) — those relied on
-echo writing quotes verbatim for the shell to strip when sourcing.
-With printf '%q', initqueue now handles escaping centrally, so the
-manual wrapping is no longer needed and would cause literal quote
-characters to leak into iscsiroot arguments.
-
-Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
-
-Related: RHEL-170857
+Related: RHEL-170858
 ---
- modules.d/95iscsi/parse-iscsiroot.sh | 4 ++--
- modules.d/99base/initqueue.sh        | 3 ++-
- 2 files changed, 4 insertions(+), 3 deletions(-)
+ modules.d/95iscsi/iscsiroot.sh       | 10 +++++-----
+ modules.d/95iscsi/parse-iscsiroot.sh |  4 ++--
+ 2 files changed, 7 insertions(+), 7 deletions(-)
 
+diff --git a/modules.d/95iscsi/iscsiroot.sh b/modules.d/95iscsi/iscsiroot.sh
+index 63b4ce19..24d9f5bb 100755
+--- a/modules.d/95iscsi/iscsiroot.sh
++++ b/modules.d/95iscsi/iscsiroot.sh
+@@ -145,7 +145,7 @@ handle_netroot() {
+ 
+     if [ -z "$iscsi_initiator" ] && [ -f /sys/firmware/ibft/initiator/initiator-name ] && ! [ -f /tmp/iscsi_set_initiator ]; then
+         iscsi_initiator=$(while read -r line || [ -n "$line" ]; do echo "$line"; done < /sys/firmware/ibft/initiator/initiator-name)
+-        echo "InitiatorName=$iscsi_initiator" > /run/initiatorname.iscsi
++        printf 'InitiatorName=%q\n' "$iscsi_initiator" > /run/initiatorname.iscsi
+         rm -f /etc/iscsi/initiatorname.iscsi
+         mkdir -p /etc/iscsi
+         ln -fs /run/initiatorname.iscsi /etc/iscsi/initiatorname.iscsi
+@@ -166,7 +166,7 @@ handle_netroot() {
+ 
+     if [ -z "$iscsi_initiator" ]; then
+         iscsi_initiator=$(iscsi-iname)
+-        echo "InitiatorName=$iscsi_initiator" > /run/initiatorname.iscsi
++        printf 'InitiatorName=%q\n' "$iscsi_initiator" > /run/initiatorname.iscsi
+         rm -f /etc/iscsi/initiatorname.iscsi
+         mkdir -p /etc/iscsi
+         ln -fs /run/initiatorname.iscsi /etc/iscsi/initiatorname.iscsi
+@@ -190,7 +190,7 @@ handle_netroot() {
+         iscsi_lun=0
+     fi
+ 
+-    echo "InitiatorName=$iscsi_initiator" > /run/initiatorname.iscsi
++    printf 'InitiatorName=%q\n' "$iscsi_initiator" > /run/initiatorname.iscsi
+     ln -fs /run/initiatorname.iscsi /dev/.initiatorname.iscsi
+     if ! [ -e /etc/iscsi/initiatorname.iscsi ]; then
+         mkdir -p /etc/iscsi
+@@ -211,14 +211,14 @@ handle_netroot() {
+ 
+     if [ "$root" = "dhcp" ] || [ "$netroot" = "dhcp" ]; then
+         # if root is not specified try to mount the whole iSCSI LUN
+-        printf 'SYMLINK=="disk/by-path/*-iscsi-*-%s", SYMLINK+="root"\n' "$iscsi_lun" >> /etc/udev/rules.d/99-iscsi-root.rules
++        printf 'SYMLINK=="disk/by-path/*-iscsi-*-%s", SYMLINK+="root"\n' "$(printf '%s' "$iscsi_lun" | tr -d '"')" >> /etc/udev/rules.d/99-iscsi-root.rules
+         udevadm control --reload
+         write_fs_tab /dev/root
+         wait_for_dev -n /dev/root
+ 
+         # install mount script
+         [ -z "$DRACUT_SYSTEMD" ] \
+-            && echo "iscsi_lun=$iscsi_lun . /bin/mount-lun.sh " > "$hookdir"/mount/01-$$-iscsi.sh
++            && printf 'iscsi_lun=%q . /bin/mount-lun.sh\n' "$iscsi_lun" > "$hookdir"/mount/01-$$-iscsi.sh
+     fi
+ 
+     if strglobin "$iscsi_target_ip" '*:*:*' && ! strglobin "$iscsi_target_ip" '['; then
 diff --git a/modules.d/95iscsi/parse-iscsiroot.sh b/modules.d/95iscsi/parse-iscsiroot.sh
-index 1a102b12..80aae95f 100755
+index 75747111..1a102b12 100755
 --- a/modules.d/95iscsi/parse-iscsiroot.sh
 +++ b/modules.d/95iscsi/parse-iscsiroot.sh
-@@ -87,7 +87,7 @@ if [ -n "$iscsi_firmware" ]; then
-     echo "${DRACUT_SYSTEMD+systemctl is-active initrd-root-device.target || }[ -f '/tmp/iscsistarted-firmware' ]" > "$hookdir"/initqueue/finished/iscsi_started.sh
-     initqueue --unique --online /sbin/iscsiroot online "iscsi:" "$NEWROOT"
-     initqueue --unique --onetime --timeout /sbin/iscsiroot timeout "iscsi:" "$NEWROOT"
--    initqueue --unique --onetime --settled /sbin/iscsiroot online "iscsi:" "'$NEWROOT'"
-+    initqueue --unique --onetime --settled /sbin/iscsiroot online "iscsi:" "$NEWROOT"
- fi
+@@ -105,7 +105,7 @@ fi
  
- # ISCSI actually supported?
-@@ -99,7 +99,7 @@ modprobe --all -b -q qla4xxx cxgb3i cxgb4i bnx2i be2iscsi
- 
- if [ -n "$netroot" ] && [ "$root" != "/dev/root" ] && [ "$root" != "dhcp" ]; then
-     if ! getargbool 1 rd.neednet > /dev/null || ! getarg "ip="; then
--        initqueue --unique --onetime --settled /sbin/iscsiroot dummy "'$netroot'" "'$NEWROOT'"
-+        initqueue --unique --onetime --settled /sbin/iscsiroot dummy "$netroot" "$NEWROOT"
-     fi
- fi
- 
-diff --git a/modules.d/99base/initqueue.sh b/modules.d/99base/initqueue.sh
-index 2c490793..672effd6 100755
---- a/modules.d/99base/initqueue.sh
-+++ b/modules.d/99base/initqueue.sh
-@@ -64,7 +64,8 @@ fi
-     # shellcheck disable=SC2016
-     [ -n "$onetime" ] && echo '[ -e "$job" ] && rm -f -- "$job"'
-     [ -n "$env" ] && echo "$env"
--    echo "$exe" "$@"
-+    printf '%q ' "$exe" "$@"
-+    printf '\n'
- } > "/tmp/$$-${job}.sh"
- 
- mv -f "/tmp/$$-${job}.sh" "$hookdir/initqueue${qname}/${job}.sh"
+ if arg=$(getarg rd.iscsi.initiator -d iscsi_initiator=) && [ -n "$arg" ] && ! [ -f /run/initiatorname.iscsi ]; then
+     iscsi_initiator=$arg
+-    echo "InitiatorName=$iscsi_initiator" > /run/initiatorname.iscsi
++    printf 'InitiatorName=%q\n' "$iscsi_initiator" > /run/initiatorname.iscsi
+     ln -fs /run/initiatorname.iscsi /dev/.initiatorname.iscsi
+     rm -f /etc/iscsi/initiatorname.iscsi
+     mkdir -p /etc/iscsi
+@@ -121,7 +121,7 @@ fi
+ if [ -z "$iscsi_initiator" ] && [ -f /sys/firmware/ibft/initiator/initiator-name ] && ! [ -f /tmp/iscsi_set_initiator ]; then
+     iscsi_initiator=$(while read -r line || [ -n "$line" ]; do echo "$line"; done < /sys/firmware/ibft/initiator/initiator-name)
+     if [ -n "$iscsi_initiator" ]; then
+-        echo "InitiatorName=$iscsi_initiator" > /run/initiatorname.iscsi
++        printf 'InitiatorName=%q\n' "$iscsi_initiator" > /run/initiatorname.iscsi
+         rm -f /etc/iscsi/initiatorname.iscsi
+         mkdir -p /etc/iscsi
+         ln -fs /run/initiatorname.iscsi /etc/iscsi/initiatorname.iscsi
+

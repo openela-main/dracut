@@ -5,7 +5,7 @@
 # strip the automatically generated dep here and instead co-own the
 # directory.
 %global __requires_exclude pkg-config
-%define dist_free_release 120.git20260728
+%define dist_free_release 126.git20260813
 
 Name: dracut
 Version: 057
@@ -135,13 +135,19 @@ Patch106: 0106.patch
 Patch107: 0107.patch
 Patch108: 0108.patch
 Patch109: 0109.patch
-Patch110: 0110.patch
 Patch111: 0111.patch
+Patch112: 0112.patch
 Patch113: 0113.patch
 Patch114: 0114.patch
+Patch115: 0115.patch
 Patch116: 0116.patch
-Patch118: 0118.patch
-Patch119: 0119.patch
+Patch117: 0117.patch
+Patch120: 0120.patch
+Patch121: 0121.patch
+Patch122: 0122.patch
+Patch123: 0123.patch
+Patch124: 0124.patch
+Patch125: 0125.patch
 
 Source1: https://www.gnu.org/licenses/lgpl-2.1.txt
 
@@ -598,26 +604,22 @@ echo 'dracut_rescue_image="yes"' > $RPM_BUILD_ROOT%{dracutlibdir}/dracut.conf.d/
 %{_prefix}/lib/kernel/install.d/51-dracut-rescue.install
 
 %changelog
-* Tue Jul 28 2026 Pavel Valena <pvalena@redhat.com> - 057-120.git20260728
+* Thu Aug 13 2026 Pavel Valena <pvalena@redhat.com> - 057-126.git20260813
+- fix(dracut): rework timeout for devices added via --mount and
 - fix(base): escape die() message in emergency hook script
 - fix(base): replace eval with safe variable indirection in
+- refactor(cms): use zdev to simplify handling CMSDASD=... boot
+- refactor(cms): use consolidated dasd config with zdev from
+- fix(qemu): add missing bochs module explicitly
 
-* Thu Jun 25 2026 Pavel Valena <pvalena@redhat.com> - 057-117.git20260625
-- revert: "feat(i18n): pull 'drm' or 'simpledrm' module unless
-
-* Wed May 27 2026 Pavel Valena <pvalena@redhat.com> - 057-115.git20260527
-- build: rebuild without an obsoleted patch
-
-* Thu May 14 2026 Pavel Valena <pvalena@redhat.com> - 057-115.git20260514
-- fix(network): warn on suspicious shell metacharacters in
-- fix(base): escape arguments in initqueue hook script
-  Related: RHEL-170857
-
-* Sat May 02 2026 Pavel Valena <pvalena@redhat.com> - 057-113.git20260502
+* Thu Jun 25 2026 Pavel Valena <pvalena@redhat.com> - 057-118.git20260624
+- feat(resume): add device used for resume
+- fix(dracut): remove trailing null characters from SBATs when
 - fix(network-legacy): replace `echo` writes with `printf` to
 - fix(iscsi): replace `echo` writes with `printf` to prevent
-- fix(base): replace eval with safe variable indirection in
-  Resolves: RHEL-170857
+- fix(network): warn on suspicious shell metacharacters in
+- fix(base): escape arguments in initqueue hook script
+- revert: "feat(i18n): pull 'drm' or 'simpledrm' module unless
 
 * Fri Jan 30 2026 Pavel Valena <pvalena@redhat.com> - 057-110.git20260130
 - fix(systemd-repart): allow partition format

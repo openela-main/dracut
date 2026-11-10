@@ -1,4 +1,4 @@
-From 3acddfd4cb6663e7caebec2ef60842fada1f997d Mon Sep 17 00:00:00 2001
+From 1a00697dfa5d58bc298fe77e48f2b586c0a0659e Mon Sep 17 00:00:00 2001
 From: Pavel Valena <pvalena@redhat.com>
 Date: Wed, 29 Apr 2026 05:41:21 +0200
 Subject: [PATCH] fix(base): replace eval with safe variable indirection in
@@ -9,7 +9,7 @@ export_n: use ${!var} and printf -v to avoid eval injection via double-quote bre
 
 (cherry picked from commit efa38e72f2742456dc93060fb1ac28d98217ac21)
 
-Related: RHEL-210939
+Related: RHEL-210940
 ---
  modules.d/99base/dracut-lib.sh | 17 +++++++++++------
  1 file changed, 11 insertions(+), 6 deletions(-)
@@ -57,3 +57,4 @@ index b1ea95255..1c753ba16 100755
      done
  }
  
+

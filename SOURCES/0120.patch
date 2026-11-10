@@ -1,0 +1,168 @@
+From d9ea05a69bc4b1aa5396e3205338ccc6200a506c Mon Sep 17 00:00:00 2001
+From: Antonio Alvarez Feijoo <antonio.feijoo@suse.com>
+Date: Mon, 4 Nov 2024 13:31:13 +0100
+Subject: [PATCH] fix(dracut): rework timeout for devices added via --mount and
+ --add-device
+
+Currently, dracut adds a systemd dropin that sets an infinite timeout _only_ for
+the underlying persistent devices of each host device that must be active in the
+initrd. E.g.:
+
+```
+localhost:~ # dracut -f --stdlog 3 --install "/mnt" --mount "/dev/sda1 /mnt btrfs rw,relatime"
+localhost:~ # lsinitrd | grep timeout.conf
+-rw-r--r--   2 root     root            0 Oct 28 14:21 etc/systemd/system/dev-disk-by\x2duuid-0d1b24c2\x2df112\x2d48ef\x2d8442\x2d1001cffc92f0.device.d/timeout.conf
+localhost:~ # ls -l /dev/disk/by-uuid/0d1b24c2-f112-48ef-8442-1001cffc92f0
+lrwxrwxrwx 1 root root 10 Oct 28 11:43 /dev/disk/by-uuid/0d1b24c2-f112-48ef-8442-1001cffc92f0 -> ../../sda1
+```
+
+It can be verified in the emergency shell:
+
+```
+sh-5.2# systemctl show --property JobRunningTimeoutUSec /dev/disk/by-uuid/0d1b24c2-f112-48ef-8442-1001cffc92f0
+JobRunningTimeoutUSec=infinity
+sh-5.2# systemctl show --property JobRunningTimeoutUSec /dev/sda1
+JobRunningTimeoutUSec=1min 30s
+```
+
+This can cause a problem if a user application expects to mount /dev/sda1 in the
+initrd (that's why it was explicitly added `--mount "/dev/sda1 ..."`), but for
+some reason the link is not created within 1min 30s.
+
+(cherry picked from commit c79fc8fd0d4b9aaa8e753296cbafdb1f82781d08)
+
+Resolves: RHEL-212601
+---
+ dracut-functions.sh              |  8 ++++----
+ dracut.sh                        | 20 +++++++++++++++-----
+ modules.d/99base/module-setup.sh | 18 +++++++++++++++++-
+ 3 files changed, 36 insertions(+), 10 deletions(-)
+
+diff --git a/dracut-functions.sh b/dracut-functions.sh
+index 0cf605dcd..894c132cd 100755
+--- a/dracut-functions.sh
++++ b/dracut-functions.sh
+@@ -593,9 +593,9 @@ for_each_host_dev_and_slaves_all() {
+     local _dev
+     local _ret=1
+ 
+-    [[ "${host_devs[*]}" ]] || return 2
++    [[ "${host_devs[*]}" ]] || [[ "${user_devs[*]}" ]] || return 2
+ 
+-    for _dev in "${host_devs[@]}"; do
++    for _dev in "${host_devs[@]}" "${user_devs[@]}"; do
+         [[ -b $_dev ]] || continue
+         if check_block_and_slaves_all "$_func" "$(get_maj_min "$_dev")"; then
+             _ret=0
+@@ -608,9 +608,9 @@ for_each_host_dev_and_slaves() {
+     local _func="$1"
+     local _dev
+ 
+-    [[ "${host_devs[*]}" ]] || return 2
++    [[ "${host_devs[*]}" ]] || [[ "${user_devs[*]}" ]] || return 2
+ 
+-    for _dev in "${host_devs[@]}"; do
++    for _dev in "${host_devs[@]}" "${user_devs[@]}"; do
+         [[ -b $_dev ]] || continue
+         check_block_and_slaves "$_func" "$(get_maj_min "$_dev")" && return 0
+     done
+diff --git a/dracut.sh b/dracut.sh
+index 4b6410c0b..fb967bbb2 100755
+--- a/dracut.sh
++++ b/dracut.sh
+@@ -330,6 +330,16 @@ read_arg() {
+     fi
+ }
+ 
++# Fills up user_devs stack variable and makes sure there are no duplicates
++push_user_devs() {
++    local _dev
++    for _dev in "$@"; do
++        [[ -z $_dev ]] && continue
++        [[ " ${user_devs[*]} " == *" $_dev "* ]] && return
++        user_devs+=("$_dev")
++    done
++}
++
+ check_conf_file() {
+     if grep -H -e '^[^#]*[+]=\("[^ ]\|.*[^ ]"\)' "$@"; then
+         printf '\ndracut: WARNING: <key>+=" <values> ": <values> should have surrounding white spaces!\n' >&2
+@@ -1576,7 +1586,7 @@ for line in "${fstab_lines[@]}"; do
+             push_host_devs "$mp"
+         done
+     fi
+-    push_host_devs "$dev"
++    push_user_devs "$dev"
+     host_fs_types["$dev"]="$3"
+ done
+ 
+@@ -1588,12 +1598,12 @@ for f in $add_fstab; do
+ done
+ 
+ for dev in $add_device; do
+-    push_host_devs "$dev"
++    push_user_devs "$dev"
+ done
+ 
+ if ((${#add_device_l[@]})); then
+     add_device+=" ${add_device_l[*]} "
+-    push_host_devs "${add_device_l[@]}"
++    push_user_devs "${add_device_l[@]}"
+ fi
+ 
+ if [[ $hostonly ]] && [[ $hostonly_default_device != "no" ]]; then
+@@ -1715,7 +1725,7 @@ _get_fs_type() {
+     return 1
+ }
+ 
+-for dev in "${host_devs[@]}"; do
++for dev in "${host_devs[@]}" "${user_devs[@]}"; do
+     _get_fs_type "$dev"
+     check_block_and_slaves_all _get_fs_type "$(get_maj_min "$dev")"
+ done
+@@ -1943,7 +1953,7 @@ export initdir dracutbasedir \
+     omit_drivers mdadmconf lvmconf root_devs \
+     use_fstab fstab_lines libdirs fscks nofscks ro_mnt \
+     stdloglvl sysloglvl fileloglvl kmsgloglvl logfile \
+-    debug host_fs_types host_devs swap_devs sshkey add_fstab \
++    debug host_fs_types host_devs user_devs swap_devs sshkey add_fstab \
+     DRACUT_VERSION udevdir udevconfdir udevrulesdir udevrulesconfdir \
+     prefix filesystems drivers dbus dbusconfdir dbusinterfaces \
+     dbusinterfacesconfdir dbusservices dbusservicesconfdir dbussession \
+diff --git a/modules.d/99base/module-setup.sh b/modules.d/99base/module-setup.sh
+index 3fa2659aa..74971cc50 100755
+--- a/modules.d/99base/module-setup.sh
++++ b/modules.d/99base/module-setup.sh
+@@ -104,7 +104,7 @@ install() {
+ 
+     ## save host_devs which we need bring up
+     if [[ $hostonly_cmdline == "yes" ]]; then
+-        if [[ -n ${host_devs[*]} ]]; then
++        if [[ -n ${host_devs[*]} ]] || [[ -n ${user_devs[*]} ]]; then
+             dracut_need_initqueue
+         fi
+         if [[ -f $initdir/lib/dracut/need-initqueue ]] || ! dracut_module_included "systemd"; then
+@@ -137,6 +137,22 @@ install() {
+                         *) ;;
+                     esac
+                 done
++
++                for _dev in "${user_devs[@]}"; do
++
++                    case "$_dev" in
++                        /dev/?*) wait_for_dev "$_dev" 0 ;;
++                        *) ;;
++                    esac
++
++                    _pdev=$(get_persistent_dev "$_dev")
++                    [[ $_dev == "$_pdev" ]] && continue
++
++                    case "$_pdev" in
++                        /dev/?*) wait_for_dev "$_pdev" 0 ;;
++                        *) ;;
++                    esac
++                done
+             )
+         fi
+     fi
+

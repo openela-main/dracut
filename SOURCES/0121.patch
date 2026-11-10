@@ -1,4 +1,4 @@
-From 626ec6752ec5eb6902c2a2424f58b8873b34c7a0 Mon Sep 17 00:00:00 2001
+From 804569a4bb90a440d777c045c5f4cc4aa844b193 Mon Sep 17 00:00:00 2001
 From: Pavel Valena <pvalena@redhat.com>
 Date: Tue, 28 Jul 2026 05:10:09 +0200
 Subject: [PATCH] fix(base): escape die() message in emergency hook script
@@ -20,7 +20,9 @@ DHCP-controlled values that reach die() through error paths.
 
 Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
 
-Resolves: RHEL-210939
+(cherry picked from commit 626ec6752ec5eb6902c2a2424f58b8873b34c7a0)
+
+Resolves: RHEL-210940
 ---
  modules.d/99base/dracut-lib.sh | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
