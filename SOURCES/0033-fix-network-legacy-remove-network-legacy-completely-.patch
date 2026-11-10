@@ -1,12 +1,12 @@
-From 2a3570c11080aa493c309af43a547914668aef1f Mon Sep 17 00:00:00 2001
+From bec8a1d31a28ad52bfd4b8daec69a37257b65902 Mon Sep 17 00:00:00 2001
 From: Pavel Valena <pvalena@redhat.com>
 Date: Thu, 7 May 2026 00:40:31 +0200
-Subject: [PATCH 32/34] fix(network-legacy): remove network-legacy completely
+Subject: [PATCH 33/38] fix(network-legacy): remove network-legacy completely
  from the codebase
 
 (To not rely solely on a dracut.spec file.)
 
-Resolves: RHEL-170844
+Resolves: RHEL-170845
 ---
  modules.d/35network-legacy/dhclient-script.sh | 275 ---------
  modules.d/35network-legacy/dhclient.conf      |  11 -

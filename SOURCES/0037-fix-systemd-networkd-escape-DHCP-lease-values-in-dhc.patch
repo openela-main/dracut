@@ -1,7 +1,7 @@
-From db72c0e6336643012ff7a2262f3ae9b9f9b956ca Mon Sep 17 00:00:00 2001
+From 9a0f09bbee567513060ec590603e369d88b93422 Mon Sep 17 00:00:00 2001
 From: Pavel Valena <pvalena@redhat.com>
 Date: Thu, 14 May 2026 16:08:00 +0200
-Subject: [PATCH 36/36] fix(systemd-networkd): escape DHCP lease values in
+Subject: [PATCH 37/38] fix(systemd-networkd): escape DHCP lease values in
  dhcpopts generation
 
 networkd-run.sh converts DHCP lease values (ROOT_PATH, NEXT_SERVER)
@@ -17,7 +17,7 @@ the NetworkManager equivalent (nm-run.sh) already handles this.
 
 Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
 
-Related: RHEL-170844
+Related: RHEL-170845
 ---
  modules.d/01systemd-networkd/networkd-run.sh | 10 ++++++----
  1 file changed, 6 insertions(+), 4 deletions(-)

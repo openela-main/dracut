@@ -1,0 +1,27 @@
+From 6328318f17933798a4a1a4e3b974b27070a470ad Mon Sep 17 00:00:00 2001
+From: Pavel Valena <pvalena@redhat.com>
+Date: Wed, 12 Aug 2026 22:55:18 +0200
+Subject: [PATCH 39/41] fix(qemu): add missing bochs module explicitly
+
+As it is needed to display console properly, and doesn't get detected in some cases.
+
+Resolves: RHEL-172462
+---
+ modules.d/90qemu/module-setup.sh | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/modules.d/90qemu/module-setup.sh b/modules.d/90qemu/module-setup.sh
+index fecaca61..27c4c143 100755
+--- a/modules.d/90qemu/module-setup.sh
++++ b/modules.d/90qemu/module-setup.sh
+@@ -21,4 +21,7 @@ installkernel() {
+         spapr-vscsi \
+         qemu_fw_cfg \
+         efi_secret
++
++    # needed for displaying console properly
++    hostonly='' instmods bochs
+ }
+-- 
+2.55.0
+

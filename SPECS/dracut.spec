@@ -8,7 +8,7 @@
 
 Name: dracut
 Version: 107
-Release: 9%{?dist}
+Release: 11%{?dist}
 
 Summary: Initramfs generator using udev
 
@@ -115,30 +115,39 @@ Patch30: 0030-fix-dracut.install-remove-extraneous-quotes-in-dracu.patch
 # feat(i18n): pull 'drm' or 'simpledrm' module unless excluded
 # Author: Pavel Valena <pvalena@redhat.com>
 Patch31: 0031-feat-i18n-pull-drm-or-simpledrm-module-unless-exclud.patch
+# feat(resume): add device used for resume
+# Author: Pavel Valena <pvalena@redhat.com>
+Patch32: 0032-feat-resume-add-device-used-for-resume.patch
 # fix(network-legacy): remove network-legacy completely from the codebase
 # Author: Pavel Valena <pvalena@redhat.com>
-Patch32: 0032-fix-network-legacy-remove-network-legacy-completely-.patch
+Patch33: 0033-fix-network-legacy-remove-network-legacy-completely-.patch
 # fix(iscsi): replace `echo` writes with `printf` to prevent variable injection
 # Author: Pavel Valena <pvalena@redhat.com>
-Patch33: 0033-fix-iscsi-replace-echo-writes-with-printf-to-prevent.patch
+Patch34: 0034-fix-iscsi-replace-echo-writes-with-printf-to-prevent.patch
 # fix(base): escape arguments in initqueue hook script generation
 # Author: Pavel Valena <pvalena@redhat.com>
-Patch34: 0034-fix-base-escape-arguments-in-initqueue-hook-script-g.patch
+Patch35: 0035-fix-base-escape-arguments-in-initqueue-hook-script-g.patch
 # fix(net-lib): warn on suspicious shell metacharacters in hostname file
 # Author: Pavel Valena <pvalena@redhat.com>
-Patch35: 0035-fix-net-lib-warn-on-suspicious-shell-metacharacters-.patch
+Patch36: 0036-fix-net-lib-warn-on-suspicious-shell-metacharacters-.patch
 # fix(systemd-networkd): escape DHCP lease values in dhcpopts generation
 # Author: Pavel Valena <pvalena@redhat.com>
-Patch36: 0036-fix-systemd-networkd-escape-DHCP-lease-values-in-dhc.patch
-# revert: "feat(i18n): pull 'drm' or 'simpledrm' module unless excluded"
+Patch37: 0037-fix-systemd-networkd-escape-DHCP-lease-values-in-dhc.patch
+# fix(i18n): prefer 'simpledrm' over 'drm' module
 # Author: Pavel Valena <pvalena@redhat.com>
-Patch37: 0037-revert-feat-i18n-pull-drm-or-simpledrm-module-unless.patch
+Patch38: 0038-fix-i18n-prefer-simpledrm-over-drm-module.patch
+# fix(qemu): add missing bochs module explicitly
+# Author: Pavel Valena <pvalena@redhat.com>
+Patch39: 0039-fix-qemu-add-missing-bochs-module-explicitly.patch
 # fix(base): escape die() message in emergency hook script
 # Author: Pavel Valena <pvalena@redhat.com>
-Patch38: 0038-fix-base-escape-die-message-in-emergency-hook-script.patch
+Patch40: 0040-fix-base-escape-die-message-in-emergency-hook-script.patch
 # fix(base): replace eval with safe variable indirection in splitsep and export_n
 # Author: Pavel Valena <pvalena@redhat.com>
-Patch39: 0039-fix-base-replace-eval-with-safe-variable-indirection.patch
+Patch41: 0041-fix-base-replace-eval-with-safe-variable-indirection.patch
+# fix(dracut): remove trailing null characters from SBATs when building UKIs
+# Author: Li Tian <litian@redhat.com>
+Patch42: 0042-fix-dracut-remove-trailing-null-characters-from-SBAT.patch
 
 # Please use source-git to work with this spec file:
 # HowTo: https://packit.dev/source-git/work-with-source-git
@@ -175,17 +184,18 @@ Requires: sed
 Requires: xz
 Requires: gzip
 
-Recommends: memstrack
-Recommends: hardlink
-Recommends: pigz
-Recommends: kpartx
-Recommends: (tpm2-tools if tpm2-tss)
+Requires: hardlink
+Requires: (tpm2-tools if tpm2-tss)
 Requires: util-linux >= 2.21
 Requires: systemd >= 219
 Requires: systemd-udev >= 219
 Requires: procps-ng
-
 Requires: libkcapi-hmaccalc
+
+# Provides users to uninstall them optionally for system minimization.
+Recommends: pigz
+Recommends: memstrack
+Recommends: kpartx
 
 %description
 dracut contains tools to create bootable initramfses for the Linux
@@ -202,7 +212,6 @@ Requires: iputils
 Requires: iproute
 Requires: jq
 Requires: NetworkManager >= 1.20
-Suggests: NetworkManager
 Obsoletes: dracut-generic < 008
 Provides:  dracut-generic = %{version}-%{release}
 
@@ -262,7 +271,6 @@ This package contains tools to assemble the local initrd and host configuration.
 Summary: dracut module to build an initramfs with most files in a squashfs image
 Requires: %{name} = %{version}-%{release}
 Requires: erofs-utils
-Suggests: squashfs-tools
 
 %description squash
 This package provides a dracut module to build an initramfs, but store most files
@@ -561,26 +569,26 @@ echo 'dracut_rescue_image="yes"' > $RPM_BUILD_ROOT%{dracutlibdir}/dracut.conf.d/
 %{_prefix}/lib/kernel/install.d/51-dracut-rescue.install
 
 %changelog
-* Tue Jul 28 2026 Pavel Valena <pvalena@redhat.com> - 107-9
+* Fri Aug 21 2026 Pavel Valena <pvalena@redhat.com> - 107-11
+- fix(dracut): remove trailing null characters from SBATs when building UKIs
+
+* Tue Jul 28 2026 Pavel Valena <pvalena@redhat.com> - 107-10
 - fix(base): escape die() message in emergency hook script
 - fix(base): replace eval with safe variable indirection in splitsep and export_n
 
-* Thu Jun 25 2026 Pavel Valena <pvalena@redhat.com> - 107-8
-- revert: "feat(i18n): pull 'drm' or 'simpledrm' module unless excluded"
+* Thu Jul 02 2026 Pavel Valena <pvalena@redhat.com> - 107-9
+- fix(i18n): prefer 'simpledrm' over 'drm' module
 
 * Wed May 27 2026 Pavel Valena <pvalena@redhat.com> - 107-7
-- build: rebuild without an obsoleted patch
-
-* Wed May 20 2026 Pavel Valena <pvalena@redhat.com> - 107-6
 - fix(base): escape arguments in initqueue hook script generation
 - fix(net-lib): warn on suspicious shell metacharacters in hostname file
 - fix(systemd-networkd): escape DHCP lease values in dhcpopts generation
-  Related: RHEL-170844
-
-* Thu May 07 2026 Pavel Valena <pvalena@redhat.com> - 107-5
 - fix(network-legacy): remove network-legacy completely from the codebase
 - fix(iscsi): replace `echo` writes with `printf` to prevent variable injection
-  Resolves: RHEL-170844
+  Resolves: RHEL-170845
+
+* Thu Feb 05 2026 Pavel Valena <pvalena@redhat.com> - 107-5
+- build: do not use weak dependencies in spec file
 
 * Fri Jan 30 2026 Pavel Valena <pvalena@redhat.com> - 107-4
 - fix(systemd-udevd): handle root=gpt-auto for systemd-v258

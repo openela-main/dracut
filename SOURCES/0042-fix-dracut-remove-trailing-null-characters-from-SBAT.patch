@@ -1,0 +1,32 @@
+From 72dff73808cb7cb3fe9c3927c138e0070fccfc98 Mon Sep 17 00:00:00 2001
+From: Li Tian <litian@redhat.com>
+Date: Wed, 14 Jan 2026 13:24:36 +0800
+Subject: [PATCH 42/42] fix(dracut): remove trailing null characters from SBATs
+ when building UKIs
+
+SBAT of kernel has null character paddings at the end. Using tools
+like ukify will display massive amount of '\0' in SBAT. Ukify is
+doing ".rstrip('b\x00')" when merging SBATs.
+
+(cherry picked from commit cbe71b639522c3f328d2a1757a3c54214df66b31)
+
+Resolves: RHEL-214163
+---
+ dracut.sh | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/dracut.sh b/dracut.sh
+index 3b8b0435..a98e53b7 100755
+--- a/dracut.sh
++++ b/dracut.sh
+@@ -2556,6 +2556,7 @@ get_sbat_string() {
+     local inp=$1
+     local out=$uefi_outdir/$2
+     objcopy -O binary --only-section=.sbat "$inp" "$out"
++    sed -i 's/\x00*$//' "$out"
+     clean_sbat_string "$out"
+ }
+ 
+-- 
+2.55.0
+

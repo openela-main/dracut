@@ -1,7 +1,7 @@
-From b1a90189bfe562ecc57cd3e91c86ac5206b89b99 Mon Sep 17 00:00:00 2001
+From bd94bb62b6b4b4e70ea2690ca817aa24a9382d4b Mon Sep 17 00:00:00 2001
 From: Pavel Valena <pvalena@redhat.com>
 Date: Thu, 7 May 2026 00:45:31 +0200
-Subject: [PATCH 33/34] fix(iscsi): replace `echo` writes with `printf` to
+Subject: [PATCH 34/38] fix(iscsi): replace `echo` writes with `printf` to
  prevent variable injection
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -20,7 +20,7 @@ literally — breaking the connection rather than allowing injection.
 
 (cherry picked from commit e61fe6afe015744baebfd96411015ae360c1af08)
 
-Related: RHEL-170844
+Related: RHEL-170845
 ---
  modules.d/95iscsi/iscsiroot.sh       | 10 +++++-----
  modules.d/95iscsi/parse-iscsiroot.sh |  4 ++--
